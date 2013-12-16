@@ -5,6 +5,7 @@ import Client.PeerDataList;
 import Messages.RegisterPeerReq;
 import Messages.ServerRespMessageItems;
 import Messages.ServerRespMessages;
+import Messages.UnRegisterPeerReq;
 
 public class TrackerServerCore {
 	private PeerDataList peerdlist = null;
@@ -24,5 +25,12 @@ public class TrackerServerCore {
 			peerdlist.addItem(peerData);
 		}	
 		return msg;
+	}
+	
+	public synchronized void unregisterPeer(UnRegisterPeerReq unrpr){		
+		PeerData peerData = unrpr.getPeerdata();
+		if (peerdlist.contains(peerData)){
+			peerdlist.deleteItem(peerData);
+		}else System.out.println("User wasn't registerd!");
 	}
 }
