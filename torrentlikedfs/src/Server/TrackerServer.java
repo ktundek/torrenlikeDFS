@@ -50,8 +50,9 @@ public class TrackerServer implements Constants{
 		TrackerServerCore tcs = new TrackerServerCore();		
 		int port = 9000;
 		Socket socket = null;		
-		TrackerItem ti = null;
-		ClientObserver observer = null;
+		//TrackerItem ti = null;
+		//ClientObserver observer = null;
+		int serverItemNr = 0;
 		
 		try {
 			serverSocket = new ServerSocket(TRACKER_PORT);
@@ -65,9 +66,10 @@ public class TrackerServer implements Constants{
 		while (true){									
 			try {
 				socket = serverSocket.accept();
+				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
-				observer = new ClientObserver(tcs, System.currentTimeMillis());
-				ti = new TrackerItem(socket, tcs, observer);					
+				ClientObserver observer = new ClientObserver(tcs, System.currentTimeMillis(), socket.getPort(), serverItemNr);
+				TrackerItem ti = new TrackerItem(socket, tcs, observer, serverItemNr);					
 			} 
 			catch (IOException e) {
 				System.out.println("Connection is not accepted");

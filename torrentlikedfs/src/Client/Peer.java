@@ -28,26 +28,41 @@ public class Peer implements Constants{
 		}
 	}
 	
-	public void connectToServer(String host, int port) throws UnknownHostException, IOException, ClassNotFoundException, UnexpectedMessageException{					
-		socket = new Socket(host, port);			
-		out = new ObjectOutputStream(socket.getOutputStream());
-		out.flush();
-		in = new ObjectInputStream(socket.getInputStream());			
+	public void connectToServer(String host, int port) {					
+		try {
+			socket = new Socket(host, port);
+			out = new ObjectOutputStream(socket.getOutputStream());
+			out.flush();
+			in = new ObjectInputStream(socket.getInputStream());			
 
-		RegisterPeerReq req = new RegisterPeerReq(peerData);
-		out.writeObject(req);
-		Object resp = in.readObject();
-		System.out.println("Server's response: "+resp.toString());
+			RegisterPeerReq req = new RegisterPeerReq(peerData);
+			out.writeObject(req);
+			Object resp = in.readObject();
+			
+			System.out.println("Server's response: "+resp.toString());
 
-		if (resp instanceof RegisterPeerResp){
-			RegisterPeerResp rpresp = (RegisterPeerResp) resp;
-			//System.out.println("Registered client!"+ ((ServerResp)rpresp.getServerRespMessages()).getMsg());			
-			System.out.println("Registered client!");
-			notify = new NotifyTracker(in, out, socket);
-			notify.start();
-		}
-		else{throw new UnexpectedMessageException("RegisterPeerResp");}
-
+			if (resp instanceof RegisterPeerResp){
+				RegisterPeerResp rpresp = (RegisterPeerResp) resp;
+				//System.out.println("Registered client!"+ ((ServerResp)rpresp.getServerRespMessages()).getMsg());			
+				System.out.println("Registered client!");
+				notify = new NotifyTracker(in, out, socket);
+				notify.start();
+			}
+			else{throw new UnexpectedMessageException("RegisterPeerResp");}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			
+			System.out.println("Input EXCEPTION!!!");
+			notify.interrupt();
+			//e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnexpectedMessageException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}							
 	}
 		
 	
@@ -56,15 +71,10 @@ public class Peer implements Constants{
 		out.writeObject(unregreq);
 	}
 	
-	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException{
+	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		Peer peer = new Peer(TRACKER_PORT);
-		try {
-			System.out.println("BEFORE_CALL");
-			peer.connectToServer(TRACKER_HOST, TRACKER_PORT);			
-			System.out.println("AFTER_CALL");			
-		} catch (ClassNotFoundException | IOException e) {
-			System.out.println("Peer on port "+ peer.peerData.getPort()+" can not connect to server");
-			e.printStackTrace();
-		}
+		//System.out.println("BEFORE_CALL");
+		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);			
+		//System.out.println("AFTER_CALL");			
 	}
 }

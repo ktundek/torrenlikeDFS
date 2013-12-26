@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 import Messages.PeerAliveReq;
+import Messages.RegisterGroupReq;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
 import Messages.ServerResp;
@@ -18,12 +20,15 @@ public class TrackerItem extends Thread{
 	private Socket socket;
 	private TrackerServerCore serverCore;
 	private ClientObserver observer;
+	private boolean isRunning = true;
+	private int nr; 
 
-	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer) {
+	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer, int nr) {
 		super();
 		this.socket = socket;
 		this.serverCore = serverCore;
 		this.observer = observer;
+		this.nr = nr;
 		this.start();		
 	}
 	
@@ -39,7 +44,7 @@ public class TrackerItem extends Thread{
 			in = new ObjectInputStream(socket.getInputStream());
 			System.out.println("TRACKER ITEM");
 			
-			while(true){
+			while(isRunning){
 				req = in.readObject();				
 				resp = getRequest(req);				
 				out.writeObject(resp);				
@@ -47,9 +52,12 @@ public class TrackerItem extends Thread{
 			
 		} catch (IOException e) {			
 			e.printStackTrace();
+			System.out.println("TRCK "+nr+": The client has signed out");
+			observer.setIsRunning(false);
+			isRunning = false;
 		} catch (ClassNotFoundException e) {			
 			e.printStackTrace();
-		}	
+		}
 		finally
 		{
 			try {
@@ -70,7 +78,11 @@ public class TrackerItem extends Thread{
 		Object respObj=null;
 		ServerResp response = null;
 		
-		if((request instanceof RegisterPeerReq) && (request!=null)){  // REGISTER PEER
+		if (request instanceof PeerAliveReq){  // PEER ALIVE
+			observer.setTime(System.currentTimeMillis());
+			response = new TrackerAliveResp(ServerRespMessageItems.ACK);
+		}
+		else if((request instanceof RegisterPeerReq) && (request!=null)){  // REGISTER PEER
 			RegisterPeerReq rpr = (RegisterPeerReq)request;
 			response = new RegisterPeerResp(serverCore.registerPeer(rpr));
 			if ((response instanceof RegisterPeerResp) &&
@@ -78,9 +90,9 @@ public class TrackerItem extends Thread{
 				observer.start();
 			}
 		}		
-		else if (request instanceof PeerAliveReq){  // PEER ALIVE
-			observer.setTime(System.currentTimeMillis());
-			response = new TrackerAliveResp(ServerRespMessageItems.ACK);
+		else if(request instanceof RegisterGroupReq){	// REGISTER GROUP
+			RegisterGroupReq rgr = (RegisterGroupReq) request;
+			//response = new 
 		}
 		else{
 			System.out.println("Unknown message type!");
