@@ -15,6 +15,7 @@ import Server.Constants;
 
 public class Peer implements Constants{
 	private PeerData peerData;
+	//private PeerItem peerItem;
 	private Socket socket = null;
 	private ObjectOutputStream out= null;
 	private ObjectInputStream in = null; 
@@ -22,7 +23,7 @@ public class Peer implements Constants{
 
 	public Peer(int port) {		
 		try {
-			this.peerData = new PeerData(port, InetAddress.getLocalHost());
+			this.peerData = new PeerData(port, InetAddress.getLocalHost());			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
 		}
@@ -35,6 +36,7 @@ public class Peer implements Constants{
 			out.flush();
 			in = new ObjectInputStream(socket.getInputStream());			
 
+			//peerItem = new PeerItem(peerData, socket.getPort());
 			RegisterPeerReq req = new RegisterPeerReq(peerData);
 			out.writeObject(req);
 			Object resp = in.readObject();
@@ -44,7 +46,7 @@ public class Peer implements Constants{
 			if (resp instanceof RegisterPeerResp){
 				RegisterPeerResp rpresp = (RegisterPeerResp) resp;
 				//System.out.println("Registered client!"+ ((ServerResp)rpresp.getServerRespMessages()).getMsg());			
-				System.out.println("Registered client!");
+				System.out.println("Registered client!");				
 				notify = new NotifyTracker(in, out, socket);
 				notify.start();
 			}
@@ -67,8 +69,8 @@ public class Peer implements Constants{
 		
 	
 	public void disconnectFromServer() throws IOException{
-		UnRegisterPeerReq unregreq = new UnRegisterPeerReq(peerData);
-		out.writeObject(unregreq);
+		//UnRegisterPeerReq unregreq = new UnRegisterPeerReq(peerItem);
+		//out.writeObject(unregreq);
 	}
 	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{

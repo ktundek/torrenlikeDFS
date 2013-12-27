@@ -2,39 +2,41 @@ package Server;
 
 import Client.Group;
 import Client.PeerData;
+import Client.PeerItem;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
-import Messages.RegisterPeerReq;
 import Messages.ServerRespMessageItems;
 import Messages.ServerRespMessages;
 import Messages.UnRegisterPeerReq;
 
 public class TrackerServerCore {
-	private PeerDataList peerdList = null;
+	private PeerItemList peerIList = null;
 	private GroupList groupList = null;
 	
 	public TrackerServerCore() {
-		peerdList = new PeerDataList();
+		peerIList = new PeerItemList();
 		groupList = new GroupList();
 	}
 
-	public synchronized ServerRespMessages registerPeer(RegisterPeerReq rpr){
-		ServerRespMessages msg = ServerRespMessageItems.ACK;
-		PeerData peerData = rpr.getPeerData();
+	public synchronized ServerRespMessages registerPeer(PeerItem peerItem){
+		ServerRespMessages msg = ServerRespMessageItems.ACK;		
 		
-		if (peerdList.contains(peerData)){
+		//if (peerIList.contains(peerItem) || peerIList.containsPeerData(peerItem.getPeerData())){
+		if (peerIList.contains(peerItem)){
 			msg = ServerRespMessageItems.NACK_REG_PEER;
 		}
 		else{
-			peerdList.addItem(peerData);
+			peerIList.addItem(peerItem);
 		}	
 		return msg;
 	}
 	
-	public synchronized void unregisterPeer(UnRegisterPeerReq unrpr){		
-		PeerData peerData = unrpr.getPeerdata();
-		if (peerdList.contains(peerData)){
-			peerdList.deleteItem(peerData);
+	public synchronized void unregisterPeer(PeerItem peerItem){		
+		//PeerItem peerItem = unrpr.getPeerItem();
+		peerIList.toStringList();
+		System.out.println("PEER ITEM:" + peerItem.getPort()+", "+ peerItem.getPeerData().getInetAddress());
+		if (peerIList.contains(peerItem)){
+			peerIList.deleteItem(peerItem);
 			// if user was part of a group
 		}else System.out.println("User wasn't registerd!");
 	}
@@ -43,11 +45,16 @@ public class TrackerServerCore {
 		ServerRespMessages msg = ServerRespMessageItems.ACK;
 		Group group = rgr.getGroupitem();
 		if (groupList.contains(group)){
-			
-		}
-		else{
+			msg = ServerRespMessageItems.NACK_REG_GROUP;
+		}		
+		else{	
 			groupList.addItem(group);
 		}
 		return msg;
+	}
+	
+	public int getNrRegisteredPeer(){
+		peerIList.toStringList();
+		return peerIList.getSize();		
 	}
 }

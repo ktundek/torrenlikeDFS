@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
+import Client.PeerData;
+import Client.PeerItem;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterPeerReq;
@@ -20,6 +22,7 @@ public class TrackerItem extends Thread{
 	private Socket socket;
 	private TrackerServerCore serverCore;
 	private ClientObserver observer;
+	private PeerData peerData;
 	private boolean isRunning = true;
 	private int nr; 
 
@@ -51,10 +54,8 @@ public class TrackerItem extends Thread{
 			}
 			
 		} catch (IOException e) {			
-			e.printStackTrace();
-			System.out.println("TRCK "+nr+": The client has signed out");
-			observer.setIsRunning(false);
-			isRunning = false;
+			e.printStackTrace();			
+			dieThreads();
 		} catch (ClassNotFoundException e) {			
 			e.printStackTrace();
 		}
@@ -75,7 +76,6 @@ public class TrackerItem extends Thread{
 	}
 	
 	public synchronized Object getRequest(Object request){		
-		Object respObj=null;
 		ServerResp response = null;
 		
 		if (request instanceof PeerAliveReq){  // PEER ALIVE
@@ -84,7 +84,9 @@ public class TrackerItem extends Thread{
 		}
 		else if((request instanceof RegisterPeerReq) && (request!=null)){  // REGISTER PEER
 			RegisterPeerReq rpr = (RegisterPeerReq)request;
-			response = new RegisterPeerResp(serverCore.registerPeer(rpr));
+			peerData = rpr.getPeerData();
+			PeerItem peerItem = new PeerItem(peerData, socket.getPort());
+			response = new RegisterPeerResp(serverCore.registerPeer(peerItem));
 			if ((response instanceof RegisterPeerResp) &&
 					(response.getMsg().getMsg()=="OK")){
 				observer.start();
@@ -100,4 +102,14 @@ public class TrackerItem extends Thread{
 		
 		return response;
 	}	
+	
+	public void dieThreads(){
+		//socket.close();
+		System.out.println("Nr of Peers: "+serverCore.getNrRegisteredPeer());
+		PeerItem peerItem = new PeerItem(this.peerData, this.socket.getPort());
+		serverCore.unregisterPeer(peerItem);
+		System.out.println("TRCK "+nr+": The client has signed out");
+		observer.setIsRunning(false);
+		isRunning = false;
+	}
 }

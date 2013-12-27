@@ -49,9 +49,7 @@ public class TrackerServer implements Constants{
 		ServerSocket serverSocket = null;
 		TrackerServerCore tcs = new TrackerServerCore();		
 		int port = 9000;
-		Socket socket = null;		
-		//TrackerItem ti = null;
-		//ClientObserver observer = null;
+		Socket socket = null;			
 		int serverItemNr = 0;
 		
 		try {
@@ -66,6 +64,7 @@ public class TrackerServer implements Constants{
 		while (true){									
 			try {
 				socket = serverSocket.accept();
+				System.out.println("Nr. of peers: "+ tcs.getNrRegisteredPeer());
 				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tcs, System.currentTimeMillis(), socket.getPort(), serverItemNr);

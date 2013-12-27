@@ -3,6 +3,7 @@ package Messages;
 import java.io.Serializable;
 
 import Client.PeerData;
+import Client.PeerItem;
 
 public class RegisterPeerReq implements Serializable {
 	private PeerData peerData;
@@ -15,7 +16,7 @@ public class RegisterPeerReq implements Serializable {
 		return peerData;
 	}
 
-	public void setPeerData(PeerData peerData) {
+	public void setPeerItem(PeerData peerData) {
 		this.peerData = peerData;
 	} 
 		
