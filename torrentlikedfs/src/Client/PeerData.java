@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.net.*;
 
 
-public class PeerData implements Serializable{
+public class PeerData implements Serializable{	
+	private static final long serialVersionUID = 5372923354124483879L;
 	private int port;
 	private InetAddress inetAddress;	
 
@@ -28,8 +29,12 @@ public class PeerData implements Serializable{
 
 	public void setInetAddress(InetAddress inetAddress) {
 		this.inetAddress = inetAddress;
-	}
+	}	
 	
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
 	public boolean equals(Object object){
 		PeerData pd = (PeerData) object;
 		

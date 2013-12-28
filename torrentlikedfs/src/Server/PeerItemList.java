@@ -7,7 +7,7 @@ import java.util.Vector;
 import Client.PeerData;
 import Client.PeerItem;
 
-public class PeerItemList implements Serializable{
+public class PeerItemList{
 	//private Vector<PeerItem> peerItemList;
 	private ArrayList<PeerItem> peerItemList;
 
@@ -33,7 +33,11 @@ public class PeerItemList implements Serializable{
 	}
 	
 	public void deleteItem(PeerItem pi){
-		peerItemList.remove(pi);		
+		peerItemList.remove(pi);
+	}
+	
+	public void deleteItem(int i){
+		peerItemList.remove(i);
 	}
 	
 	public boolean contains(PeerItem pi){
@@ -60,6 +64,7 @@ public class PeerItemList implements Serializable{
 	public void toStringList(){
 		for (int i=0; i<peerItemList.size(); i++){
 			System.out.println(i+". Peer innetAddress: "+peerItemList.get(i).getPeerData().getInetAddress()
+					+", local port: "+ peerItemList.get(i).getPeerData().getPort()
 					+" and port: "+peerItemList.get(i).getPort());
 		}
 	}

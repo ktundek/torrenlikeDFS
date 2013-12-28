@@ -85,8 +85,8 @@ public class TrackerItem extends Thread{
 		else if((request instanceof RegisterPeerReq) && (request!=null)){  // REGISTER PEER
 			RegisterPeerReq rpr = (RegisterPeerReq)request;
 			peerData = rpr.getPeerData();
-			PeerItem peerItem = new PeerItem(peerData, socket.getPort());
-			response = new RegisterPeerResp(serverCore.registerPeer(peerItem));
+			//PeerItem peerItem = new PeerItem(peerData, socket.getPort());
+			response = new RegisterPeerResp(serverCore.registerPeer(rpr, socket.getPort()));
 			if ((response instanceof RegisterPeerResp) &&
 					(response.getMsg().getMsg()=="OK")){
 				observer.start();
@@ -103,9 +103,8 @@ public class TrackerItem extends Thread{
 		return response;
 	}	
 	
-	public void dieThreads(){
-		//socket.close();
-		System.out.println("Nr of Peers: "+serverCore.getNrRegisteredPeer());
+	public void dieThreads(){		
+		//System.out.println("DIE Nr of Peers: "+serverCore.getNrRegisteredPeer());
 		PeerItem peerItem = new PeerItem(this.peerData, this.socket.getPort());
 		serverCore.unregisterPeer(peerItem);
 		System.out.println("TRCK "+nr+": The client has signed out");
