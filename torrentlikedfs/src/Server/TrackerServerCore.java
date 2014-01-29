@@ -1,5 +1,6 @@
 package Server;
 
+import Client.FileData;
 import Client.Group;
 import Client.PeerData;
 import Client.PeerItem;
@@ -35,9 +36,7 @@ public class TrackerServerCore {
 		return msg;
 	}
 	
-	public synchronized void unregisterPeer(PeerItem peerItem){				
-		//System.out.println("PEER ITEM to DELETE:" + peerItem.getPort()+", "+ peerItem.getPeerData().getInetAddress());//+", "+peerItem.getPeerData().getPort());
-		//System.out.println("MEMBERS in the LIST:");
+	public synchronized void unregisterPeer(PeerItem peerItem){						
 		peerIList.toStringList();
 		for (int i=0; i<peerIList.getSize(); i++){
 			if (peerIList.getIndex(i).getPeerData().getSerialversionuid()==peerItem.getPeerData().getSerialversionuid()
@@ -46,6 +45,7 @@ public class TrackerServerCore {
 				System.out.println("USER WAS DELETED!");
 			}
 		}
+		//peerIList.toStringList();
 		/*if (peerIList.contains(peerItem)){
 			peerIList.deleteItem(peerItem);
 			// if user was part of a group
@@ -54,15 +54,22 @@ public class TrackerServerCore {
 	}
 	
 	public synchronized ServerRespMessages registerGroup(RegisterGroupReq rgr){
+		System.out.println("REGISTER GROUP!");
 		ServerRespMessages msg = ServerRespMessageItems.ACK;
-		Group group = rgr.getGroupitem();
-		if (groupList.contains(group)){
+		Group group = rgr.getGroup();
+		if (groupList.contains(group)){   
 			msg = ServerRespMessageItems.NACK_REG_GROUP;
 		}		
 		else{	
 			groupList.addItem(group);
 		}
 		return msg;
+	}
+	
+	public synchronized FileData getFile(){
+		FileData fd = null;
+		//for (int i=0; i<groupList.)
+		return fd;
 	}
 	
 	public int getNrRegisteredPeer(){		

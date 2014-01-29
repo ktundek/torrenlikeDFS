@@ -1,6 +1,8 @@
 package Client;
 
-public class Group {
+import java.io.Serializable;
+
+public class Group implements Serializable{
 	private PeerData peer;
 	private FileDataList fileList;
 	
@@ -24,6 +26,5 @@ public class Group {
 
 	public void setFileList(FileDataList fileList) {
 		this.fileList = fileList;
-	}
-		
+	}		
 }

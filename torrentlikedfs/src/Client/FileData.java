@@ -4,24 +4,31 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import Exceptions.UnableToReadFileException;
 
-public class FileData {
+public class FileData implements Serializable{
 	private String name;
 	private long size;
 	private String path;
 	private byte[] hash;
 	
-	public FileData(File file) throws IOException, UnableToReadFileException{
-		if (!file.canRead())
-			throw new UnableToReadFileException(file.getCanonicalPath());
-		name = file.getName();			
-		size = file.length();		
-		path = file.getCanonicalPath();
-		hash = createChecksum(path);
+	public FileData(File file) {
+		try {
+			if (!file.canRead())			
+				throw new UnableToReadFileException(file.getCanonicalPath());			
+			name = file.getName();			
+			size = file.length();		
+			path = file.getCanonicalPath();
+			hash = createChecksum(path);
+		} catch (UnableToReadFileException | IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Unabel to read file: "+file.getName());
+			e.printStackTrace();
+		}
 	}
 	
 	// Calculate checksum for a file
@@ -35,8 +42,8 @@ public class FileData {
 		    byte[] dataBytes = new byte[1024]; // buffer			    
 		    int read = 0; 
 		 
-		    while (read != -1) {
-		    	read = fis.read(dataBytes);
+		    while ((read = fis.read(dataBytes)) != -1) {
+		    	//read = fis.read(dataBytes);
 		    	md.update(dataBytes, 0, read);
 		    }
 		    fis.close();

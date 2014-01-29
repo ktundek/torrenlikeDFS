@@ -36,4 +36,18 @@ public class GroupList {
 		}
 		return cont;
 	}
+	
+	public int getSize(){
+		return groupList.size();
+	}
+	
+	public void toStringGroup(){
+		for (int i=0; i<groupList.size(); i++){
+			for (int j=0; j<groupList.get(i).getFileList().getSize(); j++){
+				System.out.println(i+". Peer, File data:"+ 
+						groupList.get(i).getFileList().getItem(j).getName()+", "+
+						groupList.get(i).getFileList().getItem(j).getSize());
+			}
+		}
+	}
 }

@@ -31,21 +31,17 @@ public class NotifyTracker extends Thread {
 				
 				out.writeObject(alive);
 				out.flush();
-				Object resp = in.readObject();
-				processServerResp((ServerResp)resp);
+				//Object resp = in.readObject();
+				//processServerResp((ServerResp)resp);
 				//System.out.println("Server's response to ALIVE: "+resp.toString());
 				TimeUnit.SECONDS.sleep(10);
 				
 			} catch (IOException e) {
-				System.out.println("SOCKET EXCEPTION!");
+				System.out.println("SOCKET EXCEPTION in NOTIFY TRACKER!");
 				isRunning = false;
 				e.printStackTrace();			
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
 			} catch (InterruptedException e) {				
-				e.printStackTrace();
-			} catch (UnexpectedMessageException e) {
-				e.printStackTrace();
+				e.printStackTrace();			
 			}							
 		}
 	}

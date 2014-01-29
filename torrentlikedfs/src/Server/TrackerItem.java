@@ -10,6 +10,7 @@ import Client.PeerData;
 import Client.PeerItem;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
+import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
 import Messages.ServerResp;
@@ -94,7 +95,7 @@ public class TrackerItem extends Thread{
 		}		
 		else if(request instanceof RegisterGroupReq){	// REGISTER GROUP
 			RegisterGroupReq rgr = (RegisterGroupReq) request;
-			//response = new 
+			response = new RegisterGroupResp(serverCore.registerGroup(rgr));
 		}
 		else{
 			System.out.println("Unknown message type!");

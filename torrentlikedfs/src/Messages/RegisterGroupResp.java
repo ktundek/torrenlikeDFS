@@ -5,9 +5,9 @@ import java.io.Serializable;
 public class RegisterGroupResp extends ServerResp implements Serializable{
 	private ServerRespMessages msg;
 
-	public RegisterGroupResp(ServerRespMessages msg, ServerRespMessages msg2) {
+	public RegisterGroupResp(ServerRespMessages msg) {
 		super(msg);
-		msg = msg2;
+		this.msg = msg;
 	}
 	
 	public ServerRespMessages getServerRespMessages(){

@@ -1,11 +1,12 @@
 package Client;
 
+import java.io.Serializable;
 import java.util.Vector;
 
-public class FileDataList {
+public class FileDataList implements Serializable{
 	private Vector<FileData> fileDataList;
 
-	public FileDataList(Vector<FileData> fileDataList) {
+	public FileDataList() {
 		super();
 		fileDataList = new Vector<FileData>();
 	}
@@ -29,5 +30,13 @@ public class FileDataList {
 	public boolean contains(FileData fd){
 		if(fileDataList.contains(fd)) return true;
 		else return false;
+	}
+	
+	public int getSize(){
+		return fileDataList.size();
+	}
+	
+	public FileData getItem(int i){
+		return fileDataList.get(i);
 	}
 }

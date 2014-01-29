@@ -1,20 +1,22 @@
 package Messages;
 
+import java.io.Serializable;
+
 import Client.Group;
 
-public class RegisterGroupReq {
-	private Group groupitem;
+public class RegisterGroupReq implements Serializable{
+	private Group group;
 
-	public RegisterGroupReq(Group groupitem) {
+	public RegisterGroupReq(Group group) {
 		super();
-		this.groupitem = groupitem;
+		this.group = group;
 	}
 
-	public Group getGroupitem() {
-		return groupitem;
+	public Group getGroup() {
+		return group;
 	}
 
-	public void setGroupitem(Group groupitem) {
-		this.groupitem = groupitem;
+	public void setGroup(Group group) {
+		this.group = group;
 	}		
 }
