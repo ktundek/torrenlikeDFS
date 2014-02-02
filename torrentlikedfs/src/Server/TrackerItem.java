@@ -50,7 +50,7 @@ public class TrackerItem extends Thread{
 			
 			while(isRunning){
 				req = in.readObject();				
-				resp = getRequest(req);				
+				resp = getResponse(req);				
 				out.writeObject(resp);				
 			}
 			
@@ -76,7 +76,7 @@ public class TrackerItem extends Thread{
 		System.out.println("Peer is Alive: "+ System.currentTimeMillis());
 	}
 	
-	public synchronized Object getRequest(Object request){		
+	public synchronized Object getResponse(Object request){		
 		ServerResp response = null;
 		
 		if (request instanceof PeerAliveReq){  // PEER ALIVE

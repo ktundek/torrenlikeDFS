@@ -27,5 +27,7 @@ public class PeerItem implements Serializable{
 	public void setPort(int port) {
 		this.port = port;
 	}	
+	
+	
 
 }

@@ -53,6 +53,34 @@ public class PeerItemList{
 		return cont;
 	}
 	
+	public boolean containsPeerItem(PeerItem pi){
+		boolean cont = false;
+		PeerData pd = pi.getPeerData();
+		PeerData peerData = null;
+		PeerItem peerItem = null;
+		for (int i=0; i<peerItemList.size(); i++){
+			peerData = peerItemList.get(i).getPeerData();
+			peerItem = peerItemList.get(i);
+			if (peerData.equals(pd) && peerItem.getPort() == pi.getPort())
+				cont = true;
+		}
+		return cont;
+	}
+	
+	public int containsPeerItemIndex(PeerItem pi){
+		int ind = -1;
+		PeerData pd = pi.getPeerData();
+		PeerData peerData = null;
+		PeerItem peerItem = null;
+		for (int i=0; i<peerItemList.size(); i++){
+			peerData = peerItemList.get(i).getPeerData();
+			peerItem = peerItemList.get(i);
+			if (peerData.equals(pd) && peerItem.getPort() == pi.getPort())
+				ind = i;
+		}
+		return ind;
+	}
+	
 	public int getSize(){
 		return peerItemList.size();
 	}

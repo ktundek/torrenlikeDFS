@@ -63,8 +63,7 @@ public class TrackerServer implements Constants{
 		System.out.println("Tracker is waiting for clients...");
 		while (true){									
 			try {
-				socket = serverSocket.accept();
-				System.out.println("Nr. of peers: "+ tcs.getNrRegisteredPeer());
+				socket = serverSocket.accept();				
 				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tcs, System.currentTimeMillis(), socket.getPort(), serverItemNr);
