@@ -1,6 +1,7 @@
 package Server;
 
 import Client.FileData;
+import Client.FileDataList;
 import Client.Group;
 import Client.PeerData;
 import Client.PeerItem;
@@ -14,6 +15,7 @@ import Messages.UnRegisterPeerReq;
 public class TrackerServerCore {
 	private PeerItemList peerIList = null;
 	private GroupList groupList = null;
+	private FileDataList fileList = null;  // list of files on the server;
 	
 	public TrackerServerCore() {
 		peerIList = new PeerItemList();
@@ -38,25 +40,37 @@ public class TrackerServerCore {
 		return msg;
 	}
 	
-	public synchronized void unregisterPeer(PeerItem peerItem){						
-		peerIList.toStringList();		
+	public synchronized void unregisterPeer(PeerItem peerItem){
+		System.out.println("---------- UNREGISTER PEER------------");
 		int index = peerIList.containsPeerItemIndex(peerItem);
 		if (index!= -1) {
 			peerIList.deleteItem(index);
+			groupList.deleteItem(peerItem.getPeerData());
+			peerIList.toStringList();
+			groupList.toStringGroup();
 			System.out.println("USER WAS DELETED!");
 		}
-		else System.out.println("UNREGISTER PEER: Can not find Peer in the list!");		
+		else System.out.println("UNREGISTER PEER: Can not find Peer in the list!");	
+		System.out.println("----------END UNREGISTER PEER------------");
 	}
 	
 	public synchronized ServerRespMessages registerGroup(RegisterGroupReq rgr){
 		System.out.println("-----------------REGISTER GROUP------------------");
 		ServerRespMessages msg = ServerRespMessageItems.ACK;
 		Group group = rgr.getGroup();
-		if (groupList.contains(group)){   
+		FileDataList clientFileList = new FileDataList();
+		
+		if (groupList.containsGroup(group)){   
 			msg = ServerRespMessageItems.NACK_REG_GROUP;
 		}		
 		else{	
 			groupList.addItem(group);
+			groupList.toStringGroup();			
+			// if the servers file list does not contain a file from clients file list, it will be added
+			//clientFileList = fileList.getNotIncludedFileList(group.getFileList());
+			System.out.println("----------CLIENT FILE LIST-------------");
+			clientFileList.toStringFileDataList();
+				
 		}
 		System.out.println("-------------END REGISTER GROUP------------------");
 		return msg;
@@ -70,5 +84,11 @@ public class TrackerServerCore {
 	
 	public int getNrRegisteredPeer(){		
 		return peerIList.getSize();		
+	}
+	
+	public  FileDataList getNonExistetnFiles(Group group){
+		FileDataList fdl = null;
+		
+		return fdl;
 	}
 }

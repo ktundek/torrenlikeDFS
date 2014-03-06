@@ -42,7 +42,7 @@ public class ClientObserver extends Thread implements Constants{
 				System.out.println("Client is dead!");
 				this.interrupt();
 			}			
-			else System.out.println("OBS"+nr+": Client on port: "+socketPort+" is alive! Time is:" +System.currentTimeMillis());
+			else System.out.println("OBS"+nr+": Client on port: "+socketPort+" is alive! Time is:" +time);//System.currentTimeMillis());
 		}
 	}
 

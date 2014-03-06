@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import Exceptions.UnableToReadFileException;
 
 public class FileData implements Serializable{
@@ -26,7 +29,7 @@ public class FileData implements Serializable{
 			hash = createChecksum(path);
 		} catch (UnableToReadFileException | IOException e) {
 			// TODO Auto-generated catch block
-			System.out.println("Unabel to read file: "+file.getName());
+			System.out.println("Unable to read file: "+file.getName());
 			e.printStackTrace();
 		}
 	}
@@ -59,15 +62,34 @@ public class FileData implements Serializable{
 		return mdBytes;
 	}
 	
+	public int hashCode() {
+        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers            
+            append(name).
+            append(size).
+            toHashCode();
+    }
+	
 	public boolean equals(Object obj){
-		boolean eq = false;
+		if (obj == null)
+            return false;
+        if (obj == this)
+            return true;
+        if (!(obj instanceof FileData))
+            return false;
+
+        FileData fd = (FileData) obj;
+        return new EqualsBuilder().            
+            append(name, fd.name).
+            append(size, fd.size).
+            isEquals();
+		/*boolean eq = false;
 		if ((obj !=null) && (obj instanceof FileData)){
 			FileData fd = (FileData) obj;
 			if ((this.name.equals(fd.name)) && (this.size==fd.size)){
 				eq = true;
 			}
 		}
-		return eq;	
+		return eq;*/				
 	}
 
 	public String getName() {

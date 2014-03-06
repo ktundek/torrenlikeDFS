@@ -87,9 +87,9 @@ public class TrackerItem extends Thread{
 			RegisterPeerReq rpr = (RegisterPeerReq)request;
 			peerData = rpr.getPeerData();
 			//PeerItem peerItem = new PeerItem(peerData, socket.getPort());
-			response = new RegisterPeerResp(serverCore.registerPeer(rpr, socket.getPort()));
+			response = new RegisterPeerResp(serverCore.registerPeer(rpr, socket.getPort()));			
 			if ((response instanceof RegisterPeerResp) &&
-					(response.getMsg().getMsg()=="OK")){
+					(response.getMsg().getMsg()=="OK")){				
 				observer.start();
 			}
 		}		

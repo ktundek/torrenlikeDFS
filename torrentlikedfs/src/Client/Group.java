@@ -3,21 +3,21 @@ package Client;
 import java.io.Serializable;
 
 public class Group implements Serializable{
-	private PeerData peer;
+	private PeerData peerdata;
 	private FileDataList fileList;
 	
-	public Group(PeerData peer, FileDataList fileList) {
+	public Group(PeerData peerdata, FileDataList fileList) {
 		super();
-		this.peer = peer;
+		this.peerdata = peerdata;
 		this.fileList = fileList;
 	}
 
-	public PeerData getPeer() {
-		return peer;
+	public PeerData getPeerData() {
+		return peerdata;
 	}
 
-	public void setPeer(PeerData peer) {
-		this.peer = peer;
+	public void setPeer(PeerData peerdata) {
+		this.peerdata = peerdata;
 	}
 
 	public FileDataList getFileList() {

@@ -16,6 +16,7 @@ public class NotifyTracker extends Thread {
 	private ObjectOutputStream out = null;
 	private Socket socket = null;
 	private boolean isRunning = true;
+	private boolean serverResp = true;
 	
 	public NotifyTracker(ObjectInputStream in, ObjectOutputStream out, Socket socket) {
 		super();
@@ -24,17 +25,23 @@ public class NotifyTracker extends Thread {
 		this.socket = socket;
 	}
 	
+	public void setServerResp(boolean resp){
+		this.serverResp = resp;
+	}
+	
 	public void run(){
 		PeerAliveReq alive = new PeerAliveReq();		
 		while (isRunning){
 			try {
 				
+				//if (serverResp){
 				out.writeObject(alive);
-				out.flush();
-				//Object resp = in.readObject();
-				//processServerResp((ServerResp)resp);
-				//System.out.println("Server's response to ALIVE: "+resp.toString());
+				out.flush();				
 				TimeUnit.SECONDS.sleep(10);
+				//serverResp=false;
+				//}
+				//else
+				//	System.out.println("Server is down. Try to reconnect!");
 				
 			} catch (IOException e) {
 				System.out.println("SOCKET EXCEPTION in NOTIFY TRACKER!");
