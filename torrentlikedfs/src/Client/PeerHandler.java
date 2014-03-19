@@ -5,11 +5,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import Common.FileDataListClient;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
+import Messages.ServerListRespMessages;
 import Messages.ServerResp;
 import Messages.ServerRespMessageItems;
 import Messages.TrackerAliveResp;
@@ -78,8 +80,15 @@ public class PeerHandler extends Thread{
 				//nt.setServerResp(true);
 				System.out.println("PEERHANDLER: TrackerAliveResp");
 			}
-			else if(response instanceof RegisterGroupResp)
-				System.out.println("PEERHANDLER: RegisterGroupResp");				
+			else if(response instanceof RegisterGroupResp){
+				System.out.println("PEERHANDLER: RegisterGroupResp");
+				RegisterGroupResp rgr = (RegisterGroupResp)response; 
+				ServerListRespMessages msg = (ServerListRespMessages)rgr.getServerRespMessages();
+				FileDataListClient fileList = (FileDataListClient)msg.getObj();
+				for (int i=0; i<fileList.getSize(); i++){
+					System.out.println("PEERHANDLER File list: "+fileList.getItem(i).getName());
+				}
+			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");
 		}

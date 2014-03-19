@@ -2,13 +2,12 @@ package Messages;
 
 import java.io.Serializable;
 
-import Client.FileDataList;
+import Common.FileDataListClient;
 
 public class RegisterGroupResp extends ServerResp implements Serializable{
-	private ServerRespMessages msg;
-	private FileDataList fileList;
-
-	//public RegisterGroupResp(ServerRespMessages msg, FileDataList fileList) {
+	private ServerRespMessages msg;		
+	
+	//public RegisterGroupResp(ServerRespMessages msg, FileDataListClient fileList) {
 	public RegisterGroupResp(ServerRespMessages msg) {
 		super(msg);
 		this.msg = msg;
@@ -17,14 +16,5 @@ public class RegisterGroupResp extends ServerResp implements Serializable{
 	
 	public ServerRespMessages getServerRespMessages(){
 		return msg;
-	}
-
-	public FileDataList getFileList() {
-		return fileList;
-	}
-
-	public void setFileList(FileDataList fileList) {
-		this.fileList = fileList;
-	}
-		
+	}			
 }

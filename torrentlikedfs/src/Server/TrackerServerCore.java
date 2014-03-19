@@ -1,13 +1,16 @@
 package Server;
 
-import Client.FileData;
-import Client.FileDataList;
-import Client.Group;
+import Common.FileData;
+import Common.FileDataListClient;
+import Common.FileDataListServer;
+import Common.Group;
+import Common.GroupList;
 import Client.PeerData;
 import Client.PeerItem;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
+import Messages.ServerListRespMessages;
 import Messages.ServerRespMessageItems;
 import Messages.ServerRespMessages;
 import Messages.UnRegisterPeerReq;
@@ -15,7 +18,7 @@ import Messages.UnRegisterPeerReq;
 public class TrackerServerCore {
 	private PeerItemList peerIList = null;
 	private GroupList groupList = null;
-	private FileDataList fileList = null;  // list of files on the server;
+	private FileDataListServer fileList = new FileDataListServer();  // list of files on the server;
 	
 	public TrackerServerCore() {
 		peerIList = new PeerItemList();
@@ -54,25 +57,32 @@ public class TrackerServerCore {
 		System.out.println("----------END UNREGISTER PEER------------");
 	}
 	
-	public synchronized ServerRespMessages registerGroup(RegisterGroupReq rgr){
+	public synchronized ServerListRespMessages registerGroup(RegisterGroupReq rgr){
 		System.out.println("-----------------REGISTER GROUP------------------");
-		ServerRespMessages msg = ServerRespMessageItems.ACK;
+		//ServerRespMessages msg = ServerRespMessageItems.ACK;	
+		ServerListRespMessages msg= new ServerListRespMessages("", null);
+		msg.setMsg("OK");		
 		Group group = rgr.getGroup();
-		FileDataList clientFileList = new FileDataList();
+		FileDataListClient clientFileList = new FileDataListClient();		
 		
 		if (groupList.containsGroup(group)){   
-			msg = ServerRespMessageItems.NACK_REG_GROUP;
+			msg.setMsg("NACK"); // the group already exists
 		}		
 		else{	
 			groupList.addItem(group);
 			groupList.toStringGroup();			
 			// if the servers file list does not contain a file from clients file list, it will be added
-			//clientFileList = fileList.getNotIncludedFileList(group.getFileList());
+			clientFileList = fileList.getNotIncludedFileList(group.getFileList());
+			for (int i=0; i<clientFileList.getSize(); i++)
+				fileList.addItem(clientFileList.getItem(i));
 			System.out.println("----------CLIENT FILE LIST-------------");
 			clientFileList.toStringFileDataList();
+			
+			msg.setObj(clientFileList);
+			//ServerListRespMessages resp = new ServerListRespMessages(msg, clientFileList);	
 				
 		}
-		System.out.println("-------------END REGISTER GROUP------------------");
+		System.out.println("-------------END REGISTER GROUP------------------");		
 		return msg;
 	}
 	
@@ -86,8 +96,8 @@ public class TrackerServerCore {
 		return peerIList.getSize();		
 	}
 	
-	public  FileDataList getNonExistetnFiles(Group group){
-		FileDataList fdl = null;
+	public  FileDataListClient getNonExistetnFiles(Group group){
+		FileDataListClient fdl = null;
 		
 		return fdl;
 	}

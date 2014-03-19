@@ -2,7 +2,7 @@ package Messages;
 
 import java.io.Serializable;
 
-import Client.Group;
+import Common.Group;
 
 public class RegisterGroupReq implements Serializable{
 	private Group group;

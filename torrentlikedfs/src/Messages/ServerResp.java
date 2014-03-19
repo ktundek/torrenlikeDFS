@@ -2,7 +2,7 @@ package Messages;
 
 import java.io.Serializable;
 
-public abstract class ServerResp implements Serializable {
+public abstract class ServerResp implements Serializable {	
 	private ServerRespMessages msg;
 
 	public ServerResp(ServerRespMessages msg) {

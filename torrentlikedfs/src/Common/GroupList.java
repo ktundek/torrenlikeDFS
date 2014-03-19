@@ -1,8 +1,7 @@
-package Server;
+package Common;
 
 import java.util.Vector;
 
-import Client.Group;
 import Client.PeerData;
 import Client.PeerItem;
 

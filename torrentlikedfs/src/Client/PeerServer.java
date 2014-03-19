@@ -8,7 +8,8 @@ public class PeerServer extends Thread {
 	private int port;
 	private ServerSocket pssocket; // peer server socket
 	private Peer peer;	
-	
+	private int nrOfPeers = 0;
+		
 	public PeerServer(int port, Peer peer) {
 		super();
 		this.port = port;
@@ -19,7 +20,7 @@ public class PeerServer extends Thread {
 	public void run(){
 		try {
 			pssocket = new ServerSocket(port);		
-			System.out.println("PEERSERVER: Listening on port: "+port);
+			//System.out.println("PEERSERVER: Listening on port: "+port);
 		} catch (IOException e) {
 			System.out.println("PEERSERVER: Can not listen on port: "+port);
 			e.printStackTrace();
@@ -30,10 +31,13 @@ public class PeerServer extends Thread {
 		while (true){
 			try {
 				socket = pssocket.accept();
+				nrOfPeers++;
+				System.out.println("Peer on port "+port+": My "+nrOfPeers+". client! ");
+				PeerServerItem psi = new PeerServerItem(socket);
 			} catch (IOException e) {
 				System.out.println("PEERSERVER: Connection is not accepted.");
 				e.printStackTrace();
-			}
+			}			
 		}
 	}
 	

@@ -1,12 +1,14 @@
-package Client;
+package Common;
 
 import java.io.Serializable;
 
+import Client.PeerData;
+
 public class Group implements Serializable{
 	private PeerData peerdata;
-	private FileDataList fileList;
+	private FileDataListClient fileList;
 	
-	public Group(PeerData peerdata, FileDataList fileList) {
+	public Group(PeerData peerdata, FileDataListClient fileList) {
 		super();
 		this.peerdata = peerdata;
 		this.fileList = fileList;
@@ -20,11 +22,11 @@ public class Group implements Serializable{
 		this.peerdata = peerdata;
 	}
 
-	public FileDataList getFileList() {
+	public FileDataListClient getFileList() {
 		return fileList;
 	}
 
-	public void setFileList(FileDataList fileList) {
+	public void setFileList(FileDataListClient fileList) {
 		this.fileList = fileList;
 	}		
 }

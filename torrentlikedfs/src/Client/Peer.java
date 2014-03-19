@@ -7,8 +7,12 @@ import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.concurrent.TimeUnit;
 
+import Common.FileData;
+import Common.FileDataListClient;
+import Common.Group;
 import Exceptions.UnableToReadFileException;
 import Exceptions.UnexpectedMessageException;
+import Messages.ChunkReq;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
@@ -26,6 +30,7 @@ public class Peer implements Constants{
 	private NotifyTracker notify = null;
 	private PeerHandler handler = null;
 	private PeerServer peerServer = null;
+	private Socket seederSocket = null;
 
 	public Peer(int port) {		
 		try {
@@ -70,16 +75,27 @@ public class Peer implements Constants{
 		}							
 	}		
 	
-	public void connectoToSeeder(Socket socket){
-		ObjectOutputStream out2;
+	public void connectoToSeeder(String host, int port){
+		ObjectOutputStream outs = null;
+		ObjectInputStream ins = null;
 		try {
-			out2 = new ObjectOutputStream(socket.getOutputStream());
-			out2.flush();
-			//out.wri
+			seederSocket = new Socket(host, port);
+			outs = new ObjectOutputStream(seederSocket.getOutputStream());
+			outs.flush();
+			ins = new ObjectInputStream(seederSocket.getInputStream());
+			
+			ChunkReq req = new ChunkReq();
+			outs.writeObject(req);		
+			Object resp = ins.readObject();
+			System.out.println(resp);			
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}		
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void disconnectFromServer() throws IOException{
@@ -89,43 +105,21 @@ public class Peer implements Constants{
 	
 	public void registerFile(String fileName){		
 		FileData fd = new FileData(new File(fileName));
-		FileDataList fdl = new FileDataList();
+		FileDataListClient fdl = new FileDataListClient();
 		fdl.addItem(fd);
 		Group group = new Group(peerData, fdl);
 		
 		RegisterGroupReq rgr = new RegisterGroupReq(group);
-		handler.sendMessage(rgr);
-		/*try {
-			out.flush();
-			out.writeObject(rgr);
-									
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} */
-		/*try {
-			out.flush();
-			out.writeObject(rgr);
-			Object resp = in.readObject();
-			
-			if (resp!=null && resp instanceof RegisterGroupResp){
-				System.out.println("File(s) registration is successful!");
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		handler.sendMessage(rgr);		
 	}
 	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(TRACKER_PORT);
-		Peer peer = new Peer(8119);
+		Peer peer = new Peer(8118);
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
 		peer.registerFile("alma.jpg");
+		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			
 	}
 }
