@@ -8,6 +8,8 @@ import java.net.SocketException;
 
 import Client.PeerData;
 import Client.PeerItem;
+import Common.ChunkManager;
+import Messages.ChunkReq;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
@@ -23,15 +25,17 @@ public class TrackerItem extends Thread{
 	private Socket socket;
 	private TrackerServerCore serverCore;
 	private ClientObserver observer;
+	private ChunkManager chunkm;
 	private PeerData peerData;
 	private boolean isRunning = true;
 	private int nr; 
 
-	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer, int nr) {
+	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer, ChunkManager chunkm, int nr) {
 		super();
 		this.socket = socket;
 		this.serverCore = serverCore;
 		this.observer = observer;
+		this.chunkm = chunkm;
 		this.nr = nr;
 		this.start();		
 	}
@@ -96,6 +100,9 @@ public class TrackerItem extends Thread{
 		else if(request instanceof RegisterGroupReq){	// REGISTER GROUP
 			RegisterGroupReq rgr = (RegisterGroupReq) request;
 			response = new RegisterGroupResp(serverCore.registerGroup(rgr));
+		}
+		else if(request instanceof ChunkReq){  // CHUNK REQUEST
+			System.out.println("TRACKERITEM: CHUNK REQUEST MESSAGE ");
 		}
 		else{
 			System.out.println("Unknown message type!");

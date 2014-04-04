@@ -15,9 +15,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import Exceptions.UnableToReadFileException;
 
-public class FileData implements Serializable{
+public class FileData implements Serializable,Constants{
 	private String name;
-	private long size;
+	private long size; //in bytes
 	private String path;
 	//private byte[] hash;
 	private String crc;
@@ -112,6 +112,14 @@ public class FileData implements Serializable{
 			}
 		}
 		return eq;*/				
+	}
+	
+	public int getChunkNumber(){
+		if (this.getSize() <= CHUNK_SIZE) return 1;
+		else
+			if (this.getSize() % CHUNK_SIZE == 0) return (int) ((this.getSize()/CHUNK_SIZE));
+			else return (int) ((this.getSize()/CHUNK_SIZE)+1);
+			 
 	}
 
 	public String getName() {

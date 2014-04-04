@@ -1,3 +1,4 @@
+
 package Client;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class PeerClient extends Thread{
 	}
 	
 	public void run(){
-		ObjectOutputStream outs = null; 
+		/*ObjectOutputStream outs = null; 
 		ObjectInputStream ins = null;
 		try {
 			Socket socket = new Socket(host, port);
@@ -40,7 +41,7 @@ public class PeerClient extends Thread{
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 }

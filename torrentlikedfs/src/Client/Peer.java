@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.concurrent.TimeUnit;
 
+import Common.ChunkManager;
 import Common.FileData;
 import Common.FileDataListClient;
 import Common.Group;
@@ -19,7 +20,7 @@ import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
 import Messages.UnRegisterPeerReq;
-import Server.Constants;
+import Common.Constants;
 
 public class Peer implements Constants{
 	private PeerData peerData;
@@ -30,12 +31,15 @@ public class Peer implements Constants{
 	private NotifyTracker notify = null;
 	private PeerHandler handler = null;
 	private PeerServer peerServer = null;
+	private ChunkManager chunkm = null;
 	private Socket seederSocket = null;
+	private static String peerDir = "C:/PeerClient";
 
 	public Peer(int port) {		
 		try {
-			this.peerData = new PeerData(port, InetAddress.getLocalHost());	
-			peerServer = new PeerServer(port, this);
+			this.peerData = new PeerData(port, InetAddress.getLocalHost());
+			chunkm = new ChunkManager(peerDir, peerData);
+			peerServer = new PeerServer(port, this, chunkm);			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
 		}
@@ -60,7 +64,7 @@ public class Peer implements Constants{
 				notify = new NotifyTracker(in, out, socket);
 				notify.start();
 				//peerServer = new PeerServer(((RegisterPeerResp) resp).getPort(), this);
-				handler = new PeerHandler(socket, this, notify, in, out);				
+				handler = new PeerHandler(socket, this, notify, in, out, chunkm);				
 			}
 			else{throw new UnexpectedMessageException("RegisterPeerResp");}
 			
@@ -76,7 +80,7 @@ public class Peer implements Constants{
 	}		
 	
 	public void connectoToSeeder(String host, int port){
-		ObjectOutputStream outs = null;
+		/*ObjectOutputStream outs = null;
 		ObjectInputStream ins = null;
 		try {
 			seederSocket = new Socket(host, port);
@@ -87,7 +91,7 @@ public class Peer implements Constants{
 			ChunkReq req = new ChunkReq();
 			outs.writeObject(req);		
 			Object resp = ins.readObject();
-			System.out.println(resp);			
+			System.out.println(resp);		
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -95,7 +99,7 @@ public class Peer implements Constants{
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public void disconnectFromServer() throws IOException{
@@ -103,22 +107,37 @@ public class Peer implements Constants{
 		//out.writeObject(unregreq);
 	}
 	
-	public void registerFile(String fileName){		
-		FileData fd = new FileData(new File(fileName));
+	public void registerFile(String folderName){				
 		FileDataListClient fdl = new FileDataListClient();
-		fdl.addItem(fd);
+		fdl = getFileList(folderName);
 		Group group = new Group(peerData, fdl);
 		
 		RegisterGroupReq rgr = new RegisterGroupReq(group);
 		handler.sendMessage(rgr);		
 	}
 	
+	public FileDataListClient getFileList(String folderName){
+		FileDataListClient fdl = new FileDataListClient();
+		File folder = new File(folderName);
+		File[] fileList = folder.listFiles();
+		FileData fd = null;
+		
+		for (int i=0; i<fileList.length; i++){
+			if (fileList[i].isFile()){
+				fd =new FileData(fileList[i]); 
+				fdl.addItem(fd);
+			}
+		}
+		
+		return fdl;
+	}
+	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(TRACKER_PORT);
-		Peer peer = new Peer(8118);
+		Peer peer = new Peer(8119);
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
-		peer.registerFile("alma.jpg");
+		peer.registerFile(peerDir);
 		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			
 	}

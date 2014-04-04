@@ -1,4 +1,4 @@
-package Client;
+package Common;
 
 /**
  * Chunk structure for each file
@@ -32,7 +32,7 @@ public class ChunkInfo
 		chunksState[index] = new_state;
 	}
 	
-	public int countChunks()
+	public int nrChunks()
 	{
 		return chunksState.length;
 	}

@@ -3,6 +3,7 @@ import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import Client.PeerData;
+import Common.Constants;
 
 public class ClientObserver extends Thread implements Constants{
 	private TrackerServerCore serverCore=null;

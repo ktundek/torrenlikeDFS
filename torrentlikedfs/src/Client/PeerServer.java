@@ -4,16 +4,20 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import Common.ChunkManager;
+
 public class PeerServer extends Thread {
 	private int port;
 	private ServerSocket pssocket; // peer server socket
 	private Peer peer;	
 	private int nrOfPeers = 0;
+	private ChunkManager chunkm = null;
 		
-	public PeerServer(int port, Peer peer) {
+	public PeerServer(int port, Peer peer, ChunkManager chunkm) {
 		super();
 		this.port = port;
 		this.peer = peer;
+		this.chunkm = chunkm;
 		this.start();	
 	}
 	

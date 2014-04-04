@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import Common.ChunkManager;
 import Common.FileDataListClient;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
@@ -20,19 +21,23 @@ public class PeerHandler extends Thread{
 	private Socket socket;
 	private Peer peer;
 	private NotifyTracker nt;
+	private ChunkManager chunkm;
 	private boolean isRunning = true;
 	private Object obj = null;	
 	private Object resp = null;
 	private ObjectOutputStream out = null;
 	private ObjectInputStream in = null;
 	
-	public PeerHandler(Socket socket, Peer peer, NotifyTracker nt, ObjectInputStream in, ObjectOutputStream out) {
+	public PeerHandler(Socket socket, Peer peer, NotifyTracker nt, 
+			ObjectInputStream in, ObjectOutputStream out, ChunkManager chunkm) 
+	{
 		super();
 		this.socket = socket;
 		this.peer = peer;
 		this.nt = nt;	
 		this.in = in;
 		this.out = out;
+		this.chunkm = chunkm;
 		this.start();
 	}
 	
@@ -88,6 +93,7 @@ public class PeerHandler extends Thread{
 				for (int i=0; i<fileList.getSize(); i++){
 					System.out.println("PEERHANDLER File list: "+fileList.getItem(i).getName());
 				}
+				sendMessage(chunkm.getChunkReq());
 			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");

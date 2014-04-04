@@ -4,6 +4,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
 
+import Common.ChunkManager;
+import Common.Constants;
+
 public class TrackerServer implements Constants{
 	//private ServerSocket serverSocket;
 	//private TrackerServerCore tcs;
@@ -46,8 +49,10 @@ public class TrackerServer implements Constants{
 	}*/
 	
 	public static void main(String args[]){
+		String dir = "C:/TreckerServer";
 		ServerSocket serverSocket = null;
-		TrackerServerCore tsc = new TrackerServerCore();		
+		TrackerServerCore tsc = new TrackerServerCore();
+		ChunkManager chunkm = new ChunkManager(dir, null);
 		int port = 9000;
 		Socket socket = null;			
 		int serverItemNr = 0;
@@ -67,7 +72,7 @@ public class TrackerServer implements Constants{
 				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tsc, System.currentTimeMillis(), socket.getPort(), serverItemNr);
-				TrackerItem ti = new TrackerItem(socket, tsc, observer, serverItemNr);					
+				TrackerItem ti = new TrackerItem(socket, tsc, observer, chunkm, serverItemNr);					
 			} 
 			catch (IOException e) {
 				System.out.println("Connection is not accepted");
