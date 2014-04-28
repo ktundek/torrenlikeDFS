@@ -49,10 +49,11 @@ public class TrackerServer implements Constants{
 	}*/
 	
 	public static void main(String args[]){
-		String dir = "C:/TreckerServer";
+		String dirr = "C:/TreckerServer/";
+		String dirw = "C:/TreckerServerChunk/";
 		ServerSocket serverSocket = null;
 		TrackerServerCore tsc = new TrackerServerCore();
-		ChunkManager chunkm = new ChunkManager(dir, null);
+		ChunkManager chunkm = new ChunkManager(dirr, dirw, null);
 		int port = 9000;
 		Socket socket = null;			
 		int serverItemNr = 0;

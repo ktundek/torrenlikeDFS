@@ -33,12 +33,13 @@ public class Peer implements Constants{
 	private PeerServer peerServer = null;
 	private ChunkManager chunkm = null;
 	private Socket seederSocket = null;
-	private static String peerDir = "C:/PeerClient";
+	private static String peerDir = "C:/PeerClient/";
+	private static String peerChunkDir = "C:/PeerClientChunk/";
 
 	public Peer(int port) {		
 		try {
 			this.peerData = new PeerData(port, InetAddress.getLocalHost());
-			chunkm = new ChunkManager(peerDir, peerData);
+			chunkm = new ChunkManager(peerDir, peerChunkDir, peerData);
 			peerServer = new PeerServer(port, this, chunkm);			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
@@ -64,7 +65,9 @@ public class Peer implements Constants{
 				notify = new NotifyTracker(in, out, socket);
 				notify.start();
 				//peerServer = new PeerServer(((RegisterPeerResp) resp).getPort(), this);
-				handler = new PeerHandler(socket, this, notify, in, out, chunkm);				
+				handler = new PeerHandler(socket, this, notify, in, out, chunkm);
+				chunkm.setPeerHandler(handler);
+				//chunkm = new ChunkManager(peerDir, peerData, handler);
 			}
 			else{throw new UnexpectedMessageException("RegisterPeerResp");}
 			

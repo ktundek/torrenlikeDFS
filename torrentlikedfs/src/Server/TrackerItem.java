@@ -10,6 +10,7 @@ import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
 import Messages.ChunkReq;
+import Messages.ChunkResp;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
@@ -103,6 +104,12 @@ public class TrackerItem extends Thread{
 		}
 		else if(request instanceof ChunkReq){  // CHUNK REQUEST
 			System.out.println("TRACKERITEM: CHUNK REQUEST MESSAGE ");
+		}
+		else if(request instanceof ChunkResp){
+			System.out.println("TRACKERITEM: CHUNK RESPONSE MESSAGE!");
+			//ChunkManager ch = new ChunkManager("C:/TracherServer/", "C:/TracherServerChunk/", null);
+			ChunkResp resp = (ChunkResp) request;
+			chunkm.writeChunk(resp.getFd(), resp.getChunkNr(), resp.getData());
 		}
 		else{
 			System.out.println("Unknown message type!");
