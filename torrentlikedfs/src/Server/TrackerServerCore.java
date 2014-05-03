@@ -73,9 +73,9 @@ public class TrackerServerCore {
 			groupList.toStringGroup();			
 			// if the servers file list does not contain a file from clients file list, it will be added
 			clientFileList = fileList.getNotIncludedFileList(group.getFileList());
-			for (int i=0; i<clientFileList.getSize(); i++)
-				fileList.addItem(clientFileList.getItem(i));
-			System.out.println("----------CLIENT FILE LIST-------------");
+			//for (int i=0; i<clientFileList.getSize(); i++)
+				//fileList.addItem(clientFileList.getItem(i));
+			//System.out.println("----------CLIENT FILE LIST-------------");
 			clientFileList.toStringFileDataList();
 			
 			msg.setObj(clientFileList);
@@ -96,9 +96,13 @@ public class TrackerServerCore {
 		return peerIList.getSize();		
 	}
 	
-	public  FileDataListClient getNonExistetnFiles(Group group){
-		FileDataListClient fdl = null;
-		
+	public synchronized void addFile(FileData filedata){
+		fileList.addItem(filedata);
+		//fileList.toStringFileDataList();
+	}
+	
+	public synchronized FileDataListClient getNonExistetnFiles(Group group){
+		FileDataListClient fdl = null;		
 		return fdl;
 	}
 }

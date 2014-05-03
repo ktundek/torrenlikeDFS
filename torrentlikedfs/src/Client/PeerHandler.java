@@ -7,6 +7,8 @@ import java.net.Socket;
 
 import Common.ChunkManager;
 import Common.FileDataListClient;
+import Messages.ChunkReq;
+import Messages.ChunkResp;
 import Messages.PeerAliveReq;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
@@ -96,6 +98,15 @@ public class PeerHandler extends Thread{
 				}
 				//sendMessage(chunkm.getChunkReq());
 				chunkm.processFileListChunkReq(fileList);
+			}
+			else if (response instanceof ChunkReq){
+				ChunkReq req = (ChunkReq) response;
+				chunkm.onChunkReq(req);
+			}
+			else if (response instanceof ChunkResp){
+				System.out.println("PEERHANDLER: CHNUKRESP MESSAGE!");
+				ChunkResp resp = (ChunkResp) response; 
+				chunkm.onChunkResp(resp);
 			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");

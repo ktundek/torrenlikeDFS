@@ -9,6 +9,7 @@ import java.net.SocketException;
 import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
+import Messages.ChunkMessage;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.PeerAliveReq;
@@ -81,7 +82,9 @@ public class TrackerItem extends Thread{
 		System.out.println("Peer is Alive: "+ System.currentTimeMillis());
 	}
 	
-	public synchronized Object getResponse(Object request){		
+	public synchronized Object getResponse(Object request){
+		ChunkMessage chresponse = null;
+		//ServerResp response = (ServerResp) resp;
 		ServerResp response = null;
 		
 		if (request instanceof PeerAliveReq){  // PEER ALIVE
@@ -104,18 +107,26 @@ public class TrackerItem extends Thread{
 		}
 		else if(request instanceof ChunkReq){  // CHUNK REQUEST
 			System.out.println("TRACKERITEM: CHUNK REQUEST MESSAGE ");
+			ChunkReq req = (ChunkReq) request;
+			//chresponse = new ChunkResp(req.getPeerInfo());
+			chresponse =  chunkm.onChunkReq(req);
+			if (chresponse instanceof ChunkResp){
+				//ChunkResp ch = (ChunkResp) chresponse;
+				System.out.println("TRACKERITEM: RESP:");			
+			}
 		}
-		else if(request instanceof ChunkResp){
-			System.out.println("TRACKERITEM: CHUNK RESPONSE MESSAGE!");
-			//ChunkManager ch = new ChunkManager("C:/TracherServer/", "C:/TracherServerChunk/", null);
-			ChunkResp resp = (ChunkResp) request;
-			chunkm.writeChunk(resp.getFd(), resp.getChunkNr(), resp.getData());
+		else if(request instanceof ChunkResp){					
+			ChunkResp chresp = (ChunkResp) request;
+			chunkm.onChunkResp(chresp);
+			//chunkm.writeChunk(resp.getFd(), resp.getChunkNr(), resp.getData());
+			//chunkm.mergeChunks(resp.getFd());
 		}
 		else{
 			System.out.println("Unknown message type!");
 		}
 		
-		return response;
+		if (response==null) return chresponse; 
+		else return response;
 	}	
 	
 	public void dieThreads(){		

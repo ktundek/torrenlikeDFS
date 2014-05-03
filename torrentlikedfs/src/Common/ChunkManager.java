@@ -13,30 +13,38 @@ import Client.PeerData;
 import Client.PeerHandler;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
+import Messages.RegisterGroupReq;
 import Server.TrackerServer;
+import Server.TrackerServerCore;
 
-public class ChunkManager {
-	private Map<FileData, ChunkInfo> fileChunks=null;
+public class ChunkManager {	
 	private PeerData peer = null;
 	private TrackerServer trackers = null;
+	private TrackerServerCore tsc = null;
 	private PeerHandler phandler = null;
 	private String dirr = ""; //read from this directory
 	private String dirw = ""; //write into this directory
 	
-	//public ChunkManager(String dir, PeerData peer){
-	public ChunkManager(String dirr, String dirw, Object obj){
-		fileChunks = Collections.synchronizedMap(new HashMap<FileData,ChunkInfo>());
-		if (obj!=null && obj instanceof PeerData) this.peer = (PeerData) obj; 		
+	//for peers
+	//private Map <FileData, ChunkList>  availableFiles = null;
+	//private Map <Chunk, PeerList> chunkOwners = null;
+	
+	// for tracker's file's state
+	private Map<FileData, ChunkInfo> fileChunks=null;	// file chunk map
+		
+	public ChunkManager(String dirr, String dirw, Object obj, Object serverObj){
+		fileChunks = Collections.synchronizedMap(new HashMap<FileData, ChunkInfo>());
+		if (obj!=null && obj instanceof PeerData) this.peer = (PeerData) obj; 
+		if (serverObj!=null && serverObj instanceof TrackerServerCore) this.tsc = (TrackerServerCore) serverObj;
 		//this.phandler = phandler;
 		this.dirr = dirr;
 		this.dirw = dirw;
 		
-		addInitialFiles(dirr);
+		//addInitialFiles(dirr);
 		checkAndCreateDir(dirr);
 		
-		addInitialFiles(dirw);
-		checkAndCreateDir(dirw);
-		//checkAndCreateDir(dir+"Chunk");
+		//addInitialFiles(dirw);
+		checkAndCreateDir(dirw);		
 	}
 	
 	private void checkAndCreateDir(String dir) {
@@ -76,9 +84,7 @@ public class ChunkManager {
 			for (int j=0; j<ci.nrChunks(); j++)
 				ci.setState(j, ChunkState.COMPLETED);
 			fileChunks.put(fd, ci);
-		}
-		//System.out.println(fileChunks);
-		
+		}		
 	}
 	
 	public void printlnFileChunks(){
@@ -123,46 +129,15 @@ public class ChunkManager {
 		return buffer;
 	}
 	
-	public synchronized void writeChunk(FileData file, int chunkIndex, byte[] data) {
-		FileOutputStream fos = null;
-		//FileInputStream fin = null;
-		String fileName = file.getName();
-		//long filesize =  file.getSize();
-		//byte[] data = null;
+	private synchronized void writeChunk(FileData file, int chunkIndex, byte[] data) {
+		FileOutputStream fos = null;		
+		String fileName = file.getName();		
 		
 		try
-		{
-			//File inf = new File(dir + fileName);
-			File outf = new File(dirw + fileName + "_" + chunkIndex + ".chnk");			
-			//fin = new FileInputStream(inf);
-			fos = new FileOutputStream(outf);
-			
-			//data = new byte[chunkIndex*Constants.CHUNK_SIZE];
-			//long readStart = (chunkIndex-1)*Constants.CHUNK_SIZE;
-			//int rest = (int) (fin.available() -readStart);
-			//int byteNr = fin.read(data);
-			//byte[] newChunk = new byte[(int)(byteNr-readStart)];
-			
-			//for (int i=0; i<(byteNr-readStart);i++) newChunk[i] = data[(int) readStart+i];
-			
-			//if (readStart + Constants.CHUNK_SIZE <= filesize){				
-				//fin.read(data);				
-				//data = new byte[Constants.CHUNK_SIZE];
-				//fin.read(data, (int) readStart, Constants.CHUNK_SIZE);										
-			//}
-			//else{
-				//fin.read(data);
-				//data = new byte[rest+1];
-				//fin.read(data, (int) readStart, rest);							
-			//}
-			
-			//log("Write size:" + data.length);
-			fos.write(data);
-
-			//log("Write size:" + newChunk.length);
-			//fos.write(newChunk);
-			
-						
+		{			
+			File outf = new File(dirw + fileName + "_" + chunkIndex + ".chnk");						
+			fos = new FileOutputStream(outf);					
+			fos.write(data);					
 		}
 		catch(FileNotFoundException e)
 		{
@@ -174,14 +149,11 @@ public class ChunkManager {
 		}
 		finally
 		{
-			if (fos != null) try {fos.close();} catch (IOException e) {}
-			//if (fin != null) try {fin.close();} catch (IOException e) {}
+			if (fos != null) try {fos.close();} catch (IOException e) {}			
 		}
 	}
-
-	//private synchronized void writeChunk(FileData file, int chunkIndex, byte[] data) {
-	private synchronized byte[] getChunkData(FileData file, int chunkIndex) {
-		//FileOutputStream fos = null;
+	
+	private synchronized byte[] getChunkData(FileData file, int chunkIndex) {		
 		FileInputStream fin = null;
 		String fileName = file.getName();
 		long filesize =  file.getSize();
@@ -190,35 +162,17 @@ public class ChunkManager {
 		
 		try
 		{
-			File inf = new File(dirr + fileName);
-			//File outf = new File(dir + fileName + "_" + chunkIndex + ".chnk");			
-			fin = new FileInputStream(inf);
-			//fos = new FileOutputStream(outf);
+			File inf = new File(dirr + fileName);					
+			fin = new FileInputStream(inf);			
 			
 			data = new byte[chunkIndex*Constants.CHUNK_SIZE];
-			long readStart = (chunkIndex-1)*Constants.CHUNK_SIZE;
-			//int rest = (int) (fin.available() -readStart);
+			long readStart = (chunkIndex-1)*Constants.CHUNK_SIZE;			
 			int byteNr = fin.read(data);
 			newChunk = new byte[(int)(byteNr-readStart)];
 			
 			for (int i=0; i<(byteNr-readStart);i++) newChunk[i] = data[(int) readStart+i];
-			
-			//if (readStart + Constants.CHUNK_SIZE <= filesize){				
-				//fin.read(data);				
-				//data = new byte[Constants.CHUNK_SIZE];
-				//fin.read(data, (int) readStart, Constants.CHUNK_SIZE);										
-			//}
-			//else{
-				//fin.read(data);
-				//data = new byte[rest+1];
-				//fin.read(data, (int) readStart, rest);							
-			//}
-			
-			//log("Write size:" + data.length);
-			//fos.write(data);
-
-			log("Write size:" + newChunk.length);
-			//fos.write(newChunk);												
+						
+			log("Write size:" + newChunk.length);											
 		}
 		catch(FileNotFoundException e)
 		{
@@ -229,11 +183,49 @@ public class ChunkManager {
 			log(e.getMessage());
 		}
 		finally
-		{
-			//if (fos != null) try {fos.close();} catch (IOException e) {}
+		{			
 			if (fin != null) try {fin.close();} catch (IOException e) {}
 		}
 		return newChunk;
+	}
+	
+	public synchronized void mergeChunks(FileData filedata) {
+		//if (!isAllChunksCompleted(filedata)) return;
+		//ChunkInfo ci = chunkInfoMap.get(filedata);
+
+		FileOutputStream fos = null;
+		FileInputStream fis = null;
+		byte[] buffer = new byte[Constants.CHUNK_SIZE];
+		try
+		{
+			fos = new FileOutputStream(dirr + filedata.getName());
+			for (int i=0;i<filedata.getChunkNumber() ;i++)
+			{
+				// Read each chunk
+				fis = new FileInputStream(dirw + filedata.getName()+ "_" + i + ".chnk");
+				int readSize = fis.read(buffer);
+				if (readSize<=0) log("Warning: read size is 0 (File:" + filedata.getName() + ",Chunk:" + i + ")");
+				fis.close();
+				
+				// Write the chunk
+				fos.write(buffer, 0, readSize);
+			}
+		}
+		catch (FileNotFoundException e)
+		{
+			log(e.getMessage());
+		}
+		catch (IOException e)
+		{
+			log(e.getMessage());
+		}
+		finally
+		{
+			if (fis != null) try {fis.close();} catch (IOException e) {}
+			if (fos != null) try {fos.close();} catch (IOException e) {}
+		}
+		
+		//log(getSummaryString(fileInfo));
 	}
 	
 	//public ChunkReq getChunkReq(ChunkResp resp){
@@ -251,8 +243,8 @@ public class ChunkManager {
 		return resp;
 	}
 	
-	public void processFileListChunkReq(FileDataListClient fileList){
-		ChunkResp resp =null;// = new ChunkResp(peer);
+	public synchronized void processFileListChunkReq(FileDataListClient fileList){
+		ChunkResp resp =null;
 		byte[] chunk;
 		byte[] data = new byte[Constants.CHUNK_SIZE];
 		FileData fd = null;
@@ -262,9 +254,7 @@ public class ChunkManager {
 			fd = fileList.getItem(i);
 			chunknr = fd.getChunkNumber();
 			for (int j=1; j<=chunknr;j++){
-				chunk = getChunkData(fd, j);				
-				//chunk = readChunk(fd.getName(), j);
-				//writeChunk(fd, j, chunk);
+				chunk = getChunkData(fd, j);								
 				
 				resp = new ChunkResp(peer);
 				resp.setChunkNr(j);
@@ -274,9 +264,87 @@ public class ChunkManager {
 			}
 				
 		}
-		System.out.println("CHUNKMANAGER: processFileListChunkReq");
-		//phandler.sendMessage(resp);
+		System.out.println("CHUNKMANAGER: processFileListChunkReq");		
 	}
 	
-	//private ChunkMessage pocess
+	private synchronized boolean isAllChunksCompleted(FileData fd)
+	{
+		ChunkInfo ci = fileChunks.get(fd);
+		if (ci == null) return false;
+		
+		for (int i=0;i<ci.nrChunks();i++)
+		{
+			if (ci.getState(i) != ChunkState.COMPLETED) return false;
+		}		
+		return true; 
+	}
+	
+	public void registerPeerFiles(RegisterGroupReq rgr){
+		PeerData pd = rgr.getGroup().getPeerData();
+		FileDataListClient fdl = rgr.getGroup().getFileList();
+		
+		//if ()
+		
+		
+	}
+	
+	// when the ChunkManager gets a new chunk
+	public synchronized void onChunkResp(ChunkResp resp){
+		FileData fd = resp.getFd();		
+		int chunkNr = resp.getChunkNr();
+		byte[] data = resp.getData();
+		chunkNr--; //because chunk numbers are from 1 not from 0
+		
+		if (!fileChunks.containsKey(fd)){
+			System.out.println("First CHUNK");
+			ChunkInfo ci = new ChunkInfo(fd.getChunkNumber());		
+			ci.setState(chunkNr, ChunkState.COMPLETED);
+			fileChunks.put(fd, ci);
+			writeChunk(fd, chunkNr, data);
+		}
+		else{
+			System.out.println("Even more chunks!");
+			ChunkInfo ci = fileChunks.get(fd);
+			if (ci.getState(chunkNr)==ChunkState.EMPTY){
+				ci.setState(chunkNr, ChunkState.COMPLETED);
+				writeChunk(fd, chunkNr, data);
+			}			
+		}		
+		if (isAllChunksCompleted(fd)){
+			//System.out.println("Tracker has all file chunks!");
+			mergeChunks(fd);
+			tsc.addFile(fd);
+			// we should delete the chunks
+		}		
+	}
+	
+	public synchronized void onChunkListRequest(){
+		// megnezni, h a chunkkok mely klienseknel van es osszeallitani egy listat
+		// ha nincs egy kliensnel sem, akkor a szervertol kell kerni
+	}
+	
+	// abban az esetben, ha a kert file nincs meg egy peernel sem, a tracker fogja elkuldeni
+	public synchronized ChunkResp onChunkReq(ChunkReq req){
+		ChunkResp resp = null;
+		FileData fd = req.getFd();
+		int reqChunkNr = req.getChunkNr();
+		System.out.println("CHUNKMANAGER: onChunkReq: "+fd.getName()+", chunk: "+ reqChunkNr);
+		
+		if (fileChunks.containsKey(fd)){
+			System.out.println("van file");
+			ChunkInfo ci = fileChunks.get(fd);
+			if (ci!=null){
+				System.out.println("van chunkinfo");
+				if (ci.getState(reqChunkNr) == ChunkState.COMPLETED){
+					System.out.println("megvan a chunkinfo");
+					resp = new ChunkResp(peer);
+					resp.setFd(fd);
+					resp.setChunkNr(reqChunkNr);
+					resp.setData(getChunkData(fd, reqChunkNr));
+				}					
+			}
+		}						
+		return resp;	// the response is null if the server has not the file or the chunk is EMPTY
+	}
+
 }

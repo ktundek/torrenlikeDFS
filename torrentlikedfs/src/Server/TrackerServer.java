@@ -53,7 +53,7 @@ public class TrackerServer implements Constants{
 		String dirw = "C:/TreckerServerChunk/";
 		ServerSocket serverSocket = null;
 		TrackerServerCore tsc = new TrackerServerCore();
-		ChunkManager chunkm = new ChunkManager(dirr, dirw, null);
+		ChunkManager chunkm = new ChunkManager(dirr, dirw, null, tsc);
 		int port = 9000;
 		Socket socket = null;			
 		int serverItemNr = 0;

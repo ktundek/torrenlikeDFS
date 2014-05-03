@@ -39,7 +39,7 @@ public class Peer implements Constants{
 	public Peer(int port) {		
 		try {
 			this.peerData = new PeerData(port, InetAddress.getLocalHost());
-			chunkm = new ChunkManager(peerDir, peerChunkDir, peerData);
+			chunkm = new ChunkManager(peerDir, peerChunkDir, peerData, null);
 			peerServer = new PeerServer(port, this, chunkm);			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
@@ -130,17 +130,26 @@ public class Peer implements Constants{
 				fd =new FileData(fileList[i]); 
 				fdl.addItem(fd);
 			}
-		}
-		
+		}		
 		return fdl;
+	}
+	
+	public void sendFileRequest(){
+		File file = new File("C:/TreckerServer/life.pdf");
+		FileData fd = new FileData(file);
+		ChunkReq req = new ChunkReq(peerData);
+		req.setFd(fd);
+		req.setChunkNr(1);
+		handler.sendMessage(req);	
 	}
 	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(TRACKER_PORT);
-		Peer peer = new Peer(8119);
+		Peer peer = new Peer(8117);
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
 		peer.registerFile(peerDir);
+		peer.sendFileRequest();
 		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			
 	}
