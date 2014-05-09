@@ -22,6 +22,10 @@ public class FileData implements Serializable,Constants{
 	//private byte[] hash;
 	private String crc;
 	
+	public FileData(){
+		
+	}
+	
 	public FileData(File file) {
 		try {
 			if (!file.canRead())			

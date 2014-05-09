@@ -10,6 +10,7 @@ import Common.FileDataListClient;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.PeerAliveReq;
+import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
@@ -43,7 +44,7 @@ public class PeerHandler extends Thread{
 		this.start();
 	}
 	
-	public void sendMessage(Object obj){
+	public synchronized void sendMessage(Object obj){
 		try {			
 			out.writeObject(obj);
 			out.flush();
@@ -106,7 +107,12 @@ public class PeerHandler extends Thread{
 			else if (response instanceof ChunkResp){
 				System.out.println("PEERHANDLER: CHNUKRESP MESSAGE!");
 				ChunkResp resp = (ChunkResp) response; 
-				chunkm.onChunkResp(resp);
+				chunkm.onChunkRespPeer(resp);
+			}
+			else if(response instanceof RegisterChunkResp){  // REGISTER CHUNK RESPONSE
+				System.out.println("PEERHANDLER: REGISTER CHUNK REQUEST");
+				RegisterChunkResp rcr = (RegisterChunkResp) response;
+				chunkm.processChunkListReq(rcr);
 			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");

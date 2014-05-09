@@ -13,6 +13,8 @@ import Messages.ChunkMessage;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.PeerAliveReq;
+import Messages.RegisterChunkReq;
+import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
@@ -115,11 +117,16 @@ public class TrackerItem extends Thread{
 				System.out.println("TRACKERITEM: RESP:");			
 			}
 		}
-		else if(request instanceof ChunkResp){					
+		else if(request instanceof ChunkResp){	// CHUNK RESP				
 			ChunkResp chresp = (ChunkResp) request;
-			chunkm.onChunkResp(chresp);
+			chunkm.onChunkRespTracker(chresp);
 			//chunkm.writeChunk(resp.getFd(), resp.getChunkNr(), resp.getData());
 			//chunkm.mergeChunks(resp.getFd());
+		}
+		else if (request instanceof RegisterChunkReq){ // REGISTER CHUNK
+			RegisterChunkReq req = (RegisterChunkReq) request;
+			RegisterChunkResp resp = chunkm.processRegisterChunkRequest(req);
+			chresponse = resp;
 		}
 		else{
 			System.out.println("Unknown message type!");

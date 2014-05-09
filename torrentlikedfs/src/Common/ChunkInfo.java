@@ -1,5 +1,7 @@
 package Common;
 
+import java.io.Serializable;
+
 /**
  * Chunk structure for each file
  * +-----------+-----------+-----------+-----------+-----------+-----------+-----
@@ -11,11 +13,11 @@ package Common;
 
 //Ez az osztaly a https://code.google.com/p/simpletorrentlikep2p/ cimen talalhato 
 //Peer/ChunkManager.java file-ban talalhato ChunkInfo osztaly masolata
-public class ChunkInfo
+public class ChunkInfo implements Serializable
 {
 	private ChunkState[] chunksState;
 	
-	ChunkInfo(int chunkCount)
+	public ChunkInfo(int chunkCount)
 	{
 		chunksState = new ChunkState[chunkCount];
 		for (int i=0;i<chunkCount;i++)
@@ -36,4 +38,5 @@ public class ChunkInfo
 	{
 		return chunksState.length;
 	}
+	
 }

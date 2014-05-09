@@ -55,7 +55,7 @@ public class FileDataListClient implements Serializable{
 		}*/
 		for (int i=0; i<fileDataList.size(); i++){
 			System.out.println("FileDataListClient: "+fileDataList.get(i).getName()+", "+
-					fileDataList.get(i).getSize());
+					fileDataList.get(i).getSize()+", crc:"+fileDataList.get(i).getCrc());
 		}
 	}
 }

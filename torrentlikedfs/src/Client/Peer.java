@@ -1,13 +1,23 @@
 package Client;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import Common.ChunkInfo;
 import Common.ChunkManager;
+import Common.ChunkState;
 import Common.FileData;
 import Common.FileDataListClient;
 import Common.Group;
@@ -15,6 +25,8 @@ import Exceptions.UnableToReadFileException;
 import Exceptions.UnexpectedMessageException;
 import Messages.ChunkReq;
 import Messages.PeerAliveReq;
+import Messages.RegisterChunkReq;
+import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
@@ -119,6 +131,79 @@ public class Peer implements Constants{
 		handler.sendMessage(rgr);		
 	}
 	
+	public void registerChunks(String folderName){
+		System.out.println("PEER: Register Chunks");
+		//Map<String, ChunkInfo> chunks = null;
+		Hashtable<String, ChunkInfo> chunks = null;
+		File folder = new File(folderName);
+		File[] chunkList = folder.listFiles();
+		String [] desc = null;
+		
+		
+		if (chunkList.length!=0){
+			//chunks = new HashMap<String, ChunkInfo>();
+			chunks = new Hashtable<String, ChunkInfo>();
+			for (int i=0; i<chunkList.length; i++){
+				if (getFileExtention(chunkList[i].getName()).equals("dsc")){
+					
+					desc = getDescData(chunkList[i]); // filename, size, crc, nrofchunks
+					String fName = desc[0];
+					String fSize = desc[1];
+					String fCrc = desc[2];
+					int fChunkNr = Integer.parseInt(desc[3]);
+					//System.out.println("DESC PARAMETERS:"+fName+", "+fSize+", "+fCrc+", "+fChunkNr);
+					
+					if (!chunks.containsKey(fCrc)){						
+						ChunkInfo ci = new ChunkInfo(fChunkNr);
+						for (int j=0; j<chunkList.length; j++)
+							for (int k=0; k<fChunkNr; k++)
+								if (chunkList[j].getName().equals(fName+fSize+"_"+k+".chnk")){
+									// we mark DOWNLOADING those chunks witch the client has and can be uploaded to server
+									ci.setState(k, ChunkState.DOWNLOADING); 
+									chunks.put(fCrc, ci);
+								}
+					}
+					else{
+						ChunkInfo ci = chunks.get(fCrc);
+						for (int j=0; j<chunkList.length; j++)
+							for (int k=0; k<fChunkNr; k++)
+								if (chunkList[j].getName().equals(fName+fSize+"_"+k+".chnk"))
+									ci.setState(k, ChunkState.DOWNLOADING);
+						
+					}						
+				}
+			}
+			
+		}
+		RegisterChunkReq rcr = new RegisterChunkReq(chunks, peerData);
+		//RegisterChunkResp resp = chunkm.processRegisterChunkRequest(rcr);
+		handler.sendMessage(rcr);		
+	}
+	
+	public String getFileExtention(String fileName){
+		String ext = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+		return ext;
+	}
+	
+	public String[] getDescData(File file){		
+		String[] res = new String[4]; 
+		
+		try {
+			    BufferedReader reader = new BufferedReader(new FileReader(file)); 
+			    String line = null;
+			    int ind = 0;
+			    while ((line = reader.readLine()) != null) {
+			        res[ind] = line;
+			        //System.out.println("DESC data: "+ind+" "+res[ind]);
+			        ind++;
+			    }			    
+			} catch (IOException x) {
+			    System.err.println(x);
+			}
+		
+		return res;
+	}
+	
 	public FileDataListClient getFileList(String folderName){
 		FileDataListClient fdl = new FileDataListClient();
 		File folder = new File(folderName);
@@ -130,7 +215,8 @@ public class Peer implements Constants{
 				fd =new FileData(fileList[i]); 
 				fdl.addItem(fd);
 			}
-		}		
+		}
+		//fdl.toStringFileDataList();
 		return fdl;
 	}
 	
@@ -145,11 +231,12 @@ public class Peer implements Constants{
 	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(TRACKER_PORT);
-		Peer peer = new Peer(8117);
+		Peer peer = new Peer(8118);
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
 		peer.registerFile(peerDir);
-		peer.sendFileRequest();
+		peer.registerChunks(peerChunkDir);
+		//peer.sendFileRequest();
 		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			
 	}
