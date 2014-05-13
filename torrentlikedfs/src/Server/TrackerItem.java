@@ -9,6 +9,8 @@ import java.net.SocketException;
 import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
+import Messages.ChunkListReq;
+import Messages.ChunkListResp;
 import Messages.ChunkMessage;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
@@ -105,6 +107,7 @@ public class TrackerItem extends Thread{
 		}		
 		else if(request instanceof RegisterGroupReq){	// REGISTER GROUP
 			RegisterGroupReq rgr = (RegisterGroupReq) request;
+			chunkm.registerPeerFiles(rgr);
 			response = new RegisterGroupResp(serverCore.registerGroup(rgr));
 		}
 		else if(request instanceof ChunkReq){  // CHUNK REQUEST
@@ -116,6 +119,11 @@ public class TrackerItem extends Thread{
 				//ChunkResp ch = (ChunkResp) chresponse;
 				System.out.println("TRACKERITEM: RESP:");			
 			}
+		}
+		else if(request instanceof ChunkListReq){ // CHUNK LIST REQUEST - get a list from the server
+			ChunkListReq chlreq = (ChunkListReq) request;
+			ChunkListResp resp = chunkm.onChunkListRequest(chlreq);
+			chresponse = resp;
 		}
 		else if(request instanceof ChunkResp){	// CHUNK RESP				
 			ChunkResp chresp = (ChunkResp) request;

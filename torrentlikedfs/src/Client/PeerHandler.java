@@ -7,6 +7,7 @@ import java.net.Socket;
 
 import Common.ChunkManager;
 import Common.FileDataListClient;
+import Messages.ChunkListResp;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.PeerAliveReq;
@@ -113,6 +114,9 @@ public class PeerHandler extends Thread{
 				System.out.println("PEERHANDLER: REGISTER CHUNK REQUEST");
 				RegisterChunkResp rcr = (RegisterChunkResp) response;
 				chunkm.processChunkListReq(rcr);
+			}
+			else if(response instanceof ChunkListResp){
+				//????				
 			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");
