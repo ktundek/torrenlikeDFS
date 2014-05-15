@@ -181,23 +181,29 @@ public class ChunkManager {
 		FileInputStream fin = null;
 		String fileName = file.getName();
 		long filesize =  file.getSize();
-		chunkIndex++;
+		//chunkIndex++;
+		int index = ++chunkIndex;
 		byte[] data = null;
 		byte[] newChunk = null;
 
 		try
 		{
-			File inf = new File(dirr + fileName);					
-			fin = new FileInputStream(inf);			
+			File inf = new File(dirr + fileName);
+			if (inf.exists()){
+				fin = new FileInputStream(inf);				
 
-			data = new byte[chunkIndex*Constants.CHUNK_SIZE];
-			long readStart = (chunkIndex-1)*Constants.CHUNK_SIZE;			
-			int byteNr = fin.read(data);
-			newChunk = new byte[(int)(byteNr-readStart)];
+				data = new byte[index*Constants.CHUNK_SIZE];
+				long readStart = (index-1)*Constants.CHUNK_SIZE;			
+				int byteNr = fin.read(data);
+				newChunk = new byte[(int)(byteNr-readStart)];
 
-			for (int i=0; i<(byteNr-readStart);i++) newChunk[i] = data[(int) readStart+i];
+				for (int i=0; i<(byteNr-readStart);i++) newChunk[i] = data[(int) readStart+i];
 
-			log("Write size:" + newChunk.length);											
+				log("Write size:" + newChunk.length);
+			}
+			else{ // when the requested file is a chunk
+				newChunk = getChunk(file, chunkIndex);
+			}
 		}
 		catch(FileNotFoundException e)
 		{
@@ -215,9 +221,7 @@ public class ChunkManager {
 	}
 
 	protected synchronized byte[] getChunk(FileData file, int chunkIndex){
-		FileInputStream fin = null;
-		String fileName = file.getName();
-		long filesize =  file.getSize();
+		FileInputStream fin = null;		
 		byte[] data = null;		
 
 		try {
@@ -378,7 +382,7 @@ public class ChunkManager {
 	public synchronized String getChunkPath(FileData fd, int chunkIndex){				
 		String fileName = getChunkName(fd, chunkIndex);
 		String name = dirw+fileName;
-		System.out.println("DIR: "+name);
+		//System.out.println("DIR: "+name);
 		return name;
 	}
 	
@@ -399,13 +403,45 @@ public class ChunkManager {
 		this.phandler = phandler;
 	}
 
+	public void initializePeerFileList(FileDataListClient fdl){		
+		for (int i=0; i<fdl.getSize();i++){
+			FileData fd = fdl.getItem(i);
+			ChunkInfo ci = new ChunkInfo(fd.getChunkNumber());
+			for (int j=0; j<ci.nrChunks(); j++) ci.setState(j, ChunkState.COMPLETED);
+			fileChunks.put(fd.getCrc(), ci);
+		}
+	}
+	
+	public void initializePeerChunkList(Map<String, ChunkInfo> chunks){					
+		Iterator<Entry<String, ChunkInfo>> it = chunks.entrySet().iterator();
+
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			String key = (String) pairs.getKey();
+			ChunkInfo value = (ChunkInfo) pairs.getValue();
+			
+			if (!fileChunks.containsKey(key)){				
+				fileChunks.put(key, value);
+			}
+			else{
+				ChunkInfo ci = fileChunks.get(key);
+				for (int i=0;i<ci.nrChunks(); i++){
+					if (ci.getState(i).equals(ChunkState.EMPTY)&&
+							value.getState(i).equals(ChunkState.COMPLETED))
+						ci.setState(i, ChunkState.COMPLETED);
+				}
+			}
+		}
+	}
+	
 	// when the peer gets a ChunkResp
 	public synchronized void onChunkRespPeer(ChunkResp resp){
 		FileData fd = resp.getFd();		
 		int chunkNr = resp.getChunkNr();
 		byte[] data = resp.getData();
-		chunkNr--; //because chunk numbers are from 1 not from 0
+		//chunkNr--; //because chunk numbers are from 1 not from 0
 
+		System.out.println("CHUNKMANAGER: onChunkRespPeer: the respons: "+resp.getFd().getName() +", chunknr: "+resp.getChunkNr());
 		//if (!fileChunks.containsKey(fd)){
 		if (!fileChunks.containsKey(fd.getCrc())){
 			System.out.println("First CHUNK PEER");
@@ -427,9 +463,9 @@ public class ChunkManager {
 			writeoutfileChunk(fd.getCrc(), fd);
 		}		
 		if (isAllChunksCompleted(fd)){
-			//System.out.println("Tracker has all file chunks!");
+			System.out.println("Peer has all file chunks! :D");
 			mergeChunks(fd);
-			tsc.addFile(fd);
+			if (tsc!=null) tsc.addFile(fd);
 			// we should delete the chunks
 		}		
 	}
@@ -656,8 +692,24 @@ public class ChunkManager {
 			}
 		}
 		writeOutChunkList(chunkList);
-		ChunkListResp resp = new ChunkListResp(peer, chunkList);
+		ChunkListResp resp = new ChunkListResp(peer, chunkList, fd);
 		return resp;
+	}
+	
+	public void writeoutfileChunks(){
+		System.out.println("Write ou filechunks content, peer side: ");
+		Iterator<Entry<String, ChunkInfo>> it = fileChunks.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			String key = (String) pairs.getKey();
+			System.out.println("the key:" + key);
+
+			ChunkInfo value = fileChunks.get(key);
+			System.out.println("ChunkList size: "+value.nrChunks());
+			for (int k=0; k<value.nrChunks(); k++){
+				System.out.println("        "+value.getState(k)+" ");			
+			}
+		}
 	}
 
 	public void writeOutChunkList(Map<String, PeerList> list){							

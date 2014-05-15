@@ -25,6 +25,10 @@ public class PeerList implements Serializable{
 		return peerList.size();
 	}
 	
+	public PeerData getItem(int ind){
+		return peerList.get(ind);
+	}
+	
 	public String getPeerData(int ind){
 		PeerData pd = peerList.get(ind);
 		return (String) pd.getInetAddress().toString()+ " : " + pd.getPort();

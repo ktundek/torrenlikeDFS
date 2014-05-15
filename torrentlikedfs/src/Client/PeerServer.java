@@ -37,7 +37,7 @@ public class PeerServer extends Thread {
 				socket = pssocket.accept();
 				nrOfPeers++;
 				System.out.println("Peer on port "+port+": My "+nrOfPeers+". client! ");
-				PeerServerItem psi = new PeerServerItem(socket);
+				PeerServerItem psi = new PeerServerItem(socket, chunkm);
 			} catch (IOException e) {
 				System.out.println("PEERSERVER: Connection is not accepted.");
 				e.printStackTrace();

@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import Common.ChunkManager;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.ServerRespMessages;
@@ -12,10 +13,12 @@ import Messages.ServerRespMessages;
 public class PeerServerItem extends Thread{
 	private Socket socket = null;
 	private boolean isRunning = true;
+	private ChunkManager chunkm = null;
 
-	public PeerServerItem(Socket socket) {
+	public PeerServerItem(Socket socket, ChunkManager chunkm) {
 		super();
 		this.socket = socket;
+		this.chunkm = chunkm;
 		this.start();
 	}
 	
@@ -59,8 +62,11 @@ public class PeerServerItem extends Thread{
 		
 		if (req instanceof ChunkReq){
 			//resp = new ChunkResp();
-			System.out.println("I got a CHUNKREQ");
-			resp = "PEERSERVERITEM  registered a ChunkReq";
+			System.out.println("PEERSERVERITEM: ChunkReq");			
+			ChunkReq chunkReq = (ChunkReq) req;
+			resp = chunkm.onChunkReq(chunkReq);
+			//ChunkResp chunkResp = (ChunkResp)resp;
+			//chunkm.onChunkRespPeer(chunkResp);
 		}
 		
 		return resp;

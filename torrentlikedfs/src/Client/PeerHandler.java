@@ -116,7 +116,8 @@ public class PeerHandler extends Thread{
 				chunkm.processChunkListReq(rcr);
 			}
 			else if(response instanceof ChunkListResp){
-				//????				
+				ChunkListResp chunkList = (ChunkListResp)response;
+				peer.downloadAFile(chunkList);
 			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");
