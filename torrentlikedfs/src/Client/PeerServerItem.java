@@ -39,14 +39,15 @@ public class PeerServerItem extends Thread{
 				out.writeObject(resp);				
 			}
 			
-		} catch (IOException e) {			
-			e.printStackTrace();			
+		} catch (IOException e) {
+			System.out.println("PEERSERVERITEM: The peer has logd out.");
+			//e.printStackTrace();			
 			//dieThreads();
 		} catch (ClassNotFoundException e) {			
 			e.printStackTrace();
 		}
 		finally
-		{
+		{			
 			try {
 			    if(out != null){out.close();}			    
 			    if(in != null){in.close();}			    

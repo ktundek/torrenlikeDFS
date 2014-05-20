@@ -155,7 +155,8 @@ public class ChunkManager {
 		String filesize = String.valueOf(file.getSize());
 
 		try
-		{			
+		{	
+			System.out.println("WRITE: "+ dirw + fileName + filesize +getCrcChar(file)+ "_" + chunkIndex + ".chnk");
 			//File outf = new File(dirw + fileName + filesize +getCrcChar(file)+ "_" + chunkIndex + ".chnk");
 			//getCrcChar(file);
 			String chname = getChunkPath(file, chunkIndex);
@@ -182,7 +183,7 @@ public class ChunkManager {
 		String fileName = file.getName();
 		long filesize =  file.getSize();
 		//chunkIndex++;
-		int index = ++chunkIndex;
+		int index = chunkIndex+1;
 		byte[] data = null;
 		byte[] newChunk = null;
 
@@ -403,6 +404,7 @@ public class ChunkManager {
 		this.phandler = phandler;
 	}
 
+	// peer register its own files
 	public void initializePeerFileList(FileDataListClient fdl){		
 		for (int i=0; i<fdl.getSize();i++){
 			FileData fd = fdl.getItem(i);
@@ -412,6 +414,7 @@ public class ChunkManager {
 		}
 	}
 	
+	// peer registers its own chunks
 	public void initializePeerChunkList(Map<String, ChunkInfo> chunks){					
 		Iterator<Entry<String, ChunkInfo>> it = chunks.entrySet().iterator();
 
@@ -454,7 +457,7 @@ public class ChunkManager {
 			writeoutfileChunk(fd.getCrc(), fd);
 		}
 		else{
-			System.out.println("Even more chunks!");
+			System.out.println("Even more PEER chunks!");
 			ChunkInfo ci = fileChunks.get(fd.getCrc());
 			if (ci.getState(chunkNr)==ChunkState.EMPTY){
 				ci.setState(chunkNr, ChunkState.COMPLETED);
@@ -542,6 +545,10 @@ public class ChunkManager {
 		int chunkNr = resp.getChunkNr();
 		byte[] data = resp.getData();		
 		
+		System.out.println("onChunkRespTracker kiiratas: ");
+		writeoutfileChunks();
+		System.out.println("onChunkRespTracker kiiratas vege!");
+		
 		if (!fileChunks.containsKey(fd.getCrc())){
 			//files.put(fd.getCrc(), fd);
 			System.out.println("First CHUNK");
@@ -553,6 +560,7 @@ public class ChunkManager {
 			pl.addItem(resp.getPeerInfo());
 			chunkOwners.put(getChunkName(fd, chunkNr), pl);
 			writeChunk(fd, chunkNr, data);
+			createFileDescriptor(fd);
 			
 		}
 		else{
@@ -586,6 +594,7 @@ public class ChunkManager {
 		}		
 	}
 
+	// the server registers the peers files
 	public synchronized void registerPeerFiles(RegisterGroupReq rgr){
 		System.out.println("CHUNKMANAGER: registerPeerFiles");
 		PeerData peerdata = rgr.getGroup().getPeerData();
@@ -593,12 +602,14 @@ public class ChunkManager {
 
 		for (int i=0; i<fdl.getSize(); i++){
 			FileData fd = fdl.getItem(i);
+			System.out.println("CHUNKMANAGER: registerPeerFiles : the key: "+fd.getCrc());
+			writeoutfileChunks();
 			if (fileChunks.containsKey(fd.getCrc())){
-				System.out.println("CHUNKMANAGER: registerPeerFiles: Crc: "+fd.getCrc());
+				//System.out.println("CHUNKMANAGER: registerPeerFiles: Crc: "+fd.getCrc());
 				for(int j=0; j<fd.getChunkNumber(); j++){
 					String chunkName = getChunkName(fd, j);
 					if (chunkOwners.containsKey(chunkName)){
-						System.out.println("CHUNKMANAGER: registerPeerFiles: chunkName: "+chunkName);
+						//System.out.println("CHUNKMANAGER: registerPeerFiles: chunkName: "+chunkName);
 						PeerList pl = chunkOwners.get(chunkName);
 						pl.addItem(peerdata);
 					}
@@ -608,7 +619,55 @@ public class ChunkManager {
 
 
 	}
+	
+	// the server registers its own files
+	public synchronized void registerTrackerFiles(FileDataListClient fdl){
+		System.out.println("CHUNKMANAGER: registerTrackerFiles");		
 
+		for (int i=0; i<fdl.getSize(); i++){
+			FileData fd = fdl.getItem(i);
+			if (!fileChunks.containsKey(fd.getCrc())){
+				ChunkInfo ci = new ChunkInfo(fd.getChunkNumber());
+				for (int k=0;k<ci.nrChunks();k++) ci.setState(k, ChunkState.COMPLETED);
+				fileChunks.put(fd.getCrc(), ci);
+				System.out.println("CHUNKMANAGER: registerTrackerFiles: Crc: "+fd.getCrc());
+				for(int j=0; j<fd.getChunkNumber(); j++){
+					String chunkName = getChunkName(fd, j);
+					PeerList pl = new PeerList(); // an empty PeerList
+					chunkOwners.put(chunkName, pl);					
+				}
+			}
+		}
+	}
+	
+	// the server registers its own chunks
+	public synchronized void registerTrackerChunk(RegisterChunkReq rcr){
+		Map<String, ChunkInfo> chunks = rcr.getChunks();
+		Map<String, FileData> files = rcr.getFiles();
+		Iterator<Entry<String, ChunkInfo>> it = chunks.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			String key = (String) pairs.getKey();
+			ChunkInfo value = (ChunkInfo) pairs.getValue();
+			
+			if (!fileChunks.containsKey(key)){
+				fileChunks.put(key, value);
+				FileData fd = files.get(key);
+				for (int i=0; i<value.nrChunks(); i++){
+					if (value.getState(i).equals(ChunkState.COMPLETED)){
+						String chunkName = getChunkName(fd, i);
+						PeerList pl = new PeerList(); // empty PeerList 
+						chunkOwners.put(chunkName, pl);
+					}
+				}
+			}
+			else{ // this should not occur
+				System.out.println("There is a problem....this should not occur!");
+			}
+		}
+	}
+	
+	// the server registers the peers chunks
 	public synchronized RegisterChunkResp processRegisterChunkRequest(RegisterChunkReq rcr){
 		Map <String, ChunkInfo> res = Collections.synchronizedMap(new HashMap<String, ChunkInfo>());
 		Map <String, ChunkInfo> req = rcr.getChunks();
@@ -644,8 +703,8 @@ public class ChunkManager {
 					}
 				res.put(key, newci);
 				System.out.println("a kliensnek feltoltesre visszakuldott chunkok: NEWCI");
-				for (int k=0; k<value.nrChunks(); k++)
-					System.out.print(value.getState(k)+", ");				
+				for (int k=0; k<newci.nrChunks(); k++)
+					System.out.print(newci.getState(k)+", ");				
 				
 				// be kell irnunk a mappekbe, h milyen chunkkok mely klienseknel talalhatok meg				
 				System.out.println("be kell irnunk a mappekbe, h milyen chunkkok mely klienseknel talalhatok meg");
@@ -669,7 +728,7 @@ public class ChunkManager {
 		}
 		RegisterChunkResp resp = new RegisterChunkResp(res, rcr.getPeer());
 		return resp;
-	}
+	}	
 	
 	public synchronized ChunkListResp onChunkListRequest(ChunkListReq req){
 		// megnezni, h a chunkkok mely klienseknel van es osszeallitani egy listat
@@ -696,7 +755,7 @@ public class ChunkManager {
 		return resp;
 	}
 	
-	public void writeoutfileChunks(){
+	public synchronized void writeoutfileChunks(){
 		System.out.println("Write ou filechunks content, peer side: ");
 		Iterator<Entry<String, ChunkInfo>> it = fileChunks.entrySet().iterator();
 		while (it.hasNext()) {
@@ -712,7 +771,7 @@ public class ChunkManager {
 		}
 	}
 
-	public void writeOutChunkList(Map<String, PeerList> list){							
+	public synchronized void writeOutChunkList(Map<String, PeerList> list){							
 		Iterator<Entry<String, PeerList>> it = list.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry)it.next();
@@ -727,22 +786,24 @@ public class ChunkManager {
 		}
 	}
 	
-	public void writeOutChunkOwner(){							
+	public synchronized void writeOutChunkOwner(){							
 		Iterator<Entry<String, PeerList>> it = chunkOwners.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry)it.next();
 			String key = (String) pairs.getKey();
 			System.out.println("the key:" + key);
-
+			
 			PeerList value = chunkOwners.get(key);
+			if (value!=null){
 			System.out.println("PeerList size: "+value.size());
 			for (int k=0; k<value.size(); k++){
 				System.out.println("        "+value.getPeerData(k)+" ");			
 			}
+			}
 		}
 	}
 
-	public void writeOutChunkOwnerKeys(){
+	public synchronized void writeOutChunkOwnerKeys(){
 		Iterator<Entry<String, PeerList>> it = chunkOwners.entrySet().iterator();		
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry)it.next();

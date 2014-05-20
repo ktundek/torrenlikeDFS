@@ -55,6 +55,13 @@ public class FileDataListServer implements Serializable {
 		return newfdl;
 	}
 	
+	public void addFileList(FileDataListClient fdl){
+		for (int i=0; i<fdl.getSize(); i++){
+			FileData fd = fdl.getItem(i);
+			fileDataList.put(fd.getCrc(), fd);
+		}
+	}
+	
 	public void toStringFileDataList(){				
 		Enumeration<FileData> e = fileDataList.elements();
 		while (e.hasMoreElements()){

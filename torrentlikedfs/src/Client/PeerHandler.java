@@ -96,7 +96,7 @@ public class PeerHandler extends Thread{
 				ServerListRespMessages msg = (ServerListRespMessages)rgr.getServerRespMessages();
 				FileDataListClient fileList = (FileDataListClient)msg.getObj();
 				for (int i=0; i<fileList.getSize(); i++){
-					System.out.println("PEERHANDLER File list: "+fileList.getItem(i).getName());
+					System.out.println("PEERHANDLER RegisterGroupResp: File list: "+fileList.getItem(i).getName());
 				}
 				//sendMessage(chunkm.getChunkReq());
 				chunkm.processFileListChunkReq(fileList);
