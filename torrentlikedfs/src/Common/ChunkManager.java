@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.apache.commons.io.IOUtils;
 
 import Client.PeerData;
 import Client.PeerHandler;
@@ -24,6 +25,7 @@ import Messages.ChunkResp;
 import Messages.RegisterChunkReq;
 import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
+import Messages.RegisterPeerChunk;
 import Server.TrackerServer;
 import Server.TrackerServerCore;
 
@@ -247,9 +249,10 @@ public class ChunkManager {
 		return data;
 	}
 
-	public synchronized void mergeChunks(FileData filedata) {
+	public synchronized boolean mergeChunks(FileData filedata) {
 		//if (!isAllChunksCompleted(filedata)) return;
 		//ChunkInfo ci = chunkInfoMap.get(filedata);
+		boolean ok = false;
 		long filesize =  filedata.getSize();
 
 		FileOutputStream fos = null;
@@ -271,7 +274,8 @@ public class ChunkManager {
 				// Write the chunk
 				fos.write(buffer, 0, readSize);
 			}
-		}
+			ok = verifyCrc(filedata.getName(), filedata.getCrc());
+		}		
 		catch (FileNotFoundException e)
 		{
 			log(e.getMessage());
@@ -285,8 +289,35 @@ public class ChunkManager {
 			if (fis != null) try {fis.close();} catch (IOException e) {}
 			if (fos != null) try {fos.close();} catch (IOException e) {}
 		}
-
+		
 		//log(getSummaryString(fileInfo));
+		return ok;
+	}
+	
+	// After we have all chunks we have to delete them and the description file too
+	public synchronized void deleteChunks(FileData filedata) {					
+		//delete description file
+		String descname = dirw + filedata.getCrc()+ ".dsc";
+		File file1 = new File(descname);		
+		if (!file1.delete()) {System.out.println("CHUNKMANAGER: deleteChunks: The description file: "+descname+" wasn't deleted!");}
+		
+		//delete chunks
+		for (int i=0;i<filedata.getChunkNumber() ;i++)
+		{				
+			String chname = getChunkPath(filedata, i);
+			System.out.println("Delete: "+chname);
+			File file2 = new File(chname);
+			if (!file2.delete()){System.out.println("CHUNKMANAGER: deleteChunks: The file: "+chname+" wasn't deleted!");}			
+		}			
+
+	}
+	
+	public synchronized boolean verifyCrc(String fileName, String crc){
+		boolean ok = false;
+		File file = new File(dirr + fileName);
+		FileData fd = new FileData(file);
+		if (fd.getCrc().equals(fileName)) ok = true;
+		return ok;
 	}
 	
 	public void writeoutfileChunk(String key, FileData fd){
@@ -334,18 +365,21 @@ public class ChunkManager {
 		return true; 
 	}
 
-	public void createFileDescriptor(FileData fd){
+	public synchronized void createFileDescriptor(FileData fd){
+		FileWriter fw = null;
+		BufferedWriter bw = null;
+		File file = null;
 		try { 
-			//File file = new File(dirw+fd.getName()+fd.getSize()+".dsc");
-			File file = new File(dirw+fd.getCrc()+".dsc");
+			//File file = new File(dirw+fd.getName()+fd.getSize()+".dsc");			
+			file = new File(dirw+fd.getCrc()+".dsc");
 
 			// if file doesnt exists, then create it
 			if (!file.exists()) {
 				file.createNewFile();
 			}
 
-			FileWriter fw = new FileWriter(file.getAbsoluteFile());
-			BufferedWriter bw = new BufferedWriter(fw);
+			fw = new FileWriter(file.getAbsoluteFile());
+			bw = new BufferedWriter(fw);
 			bw.write(fd.getName());
 			bw.newLine();
 			bw.write(String.valueOf(fd.getSize()));
@@ -353,28 +387,52 @@ public class ChunkManager {
 			bw.write(fd.getCrc());
 			bw.newLine();
 			bw.write(String.valueOf(fd.getChunkNumber()));
-			bw.newLine();
-
-			bw.close();
+			bw.newLine();		
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		finally{
+			try {
+				bw.close();
+				fw.close();				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
 	}
 
-	public String[] getDescData(String fileName){		
-		String[] res = new String[4]; 
+	public synchronized String[] getDescData(String fileName){		
+		String[] res = new String[4];
+		BufferedReader reader=null;
+		//FileInputStream reader = null;
+		FileReader fr = null;
 
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(dirw+fileName)); 
+			fr = new FileReader(dirw+fileName);
+			reader = new BufferedReader(fr);
+			//reader = new FileInputStream(dirw+fileName);
 			String line = null;
 			int ind = 0;
-			while ((line = reader.readLine()) != null) {
+			while ((line = reader.readLine()) != null) {			
 				res[ind] = line;
 				//System.out.println("DESC data: "+ind+" "+res[ind]);
 				ind++;
-			}			    
+			}				
 		} catch (IOException x) {
 			System.err.println(x);
+		}
+		finally{
+			/*if (reader!=null)				
+				//reader.close();
+				IOUtils.closeQuietly(reader);*/			
+			try {
+				reader.close();
+				fr.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return res;
@@ -453,6 +511,7 @@ public class ChunkManager {
 			//fileChunks.put(fd, ci);
 			fileChunks.put(fd.getCrc(), ci);
 			writeChunk(fd, chunkNr, data);
+			registerPeerChunks(this.peer, getChunkName(fd, chunkNr), chunkNr);
 			createFileDescriptor(fd);
 			writeoutfileChunk(fd.getCrc(), fd);
 		}
@@ -462,17 +521,27 @@ public class ChunkManager {
 			if (ci.getState(chunkNr)==ChunkState.EMPTY){
 				ci.setState(chunkNr, ChunkState.COMPLETED);
 				writeChunk(fd, chunkNr, data);
+				registerPeerChunks(this.peer, getChunkName(fd, chunkNr), chunkNr);
 			}
 			writeoutfileChunk(fd.getCrc(), fd);
 		}		
 		if (isAllChunksCompleted(fd)){
 			System.out.println("Peer has all file chunks! :D");
-			mergeChunks(fd);
-			if (tsc!=null) tsc.addFile(fd);
-			// we should delete the chunks
+			if (mergeChunks(fd)){
+				if (tsc!=null) tsc.addFile(fd);
+				//we should delete the chunks
+				//deleteChunks(fd);
+			}
+			else{} //ertesiteni kell a klienst, hogy hiba tortent a file osszerakasaban			
 		}		
 	}
 	
+	// the peer registers the obtained chunks
+	public synchronized void registerPeerChunks(PeerData pd, String chunkName, int chunkNr){
+		RegisterPeerChunk rpc = new RegisterPeerChunk(pd, chunkName, chunkNr);
+		phandler.sendMessage(rpc);
+	}
+
 	public synchronized void processFileListChunkReq(FileDataListClient fileList){
 		ChunkResp resp =null;
 		byte[] chunk;
@@ -588,9 +657,12 @@ public class ChunkManager {
 		writeOutChunkOwner();
 		if (isAllChunksCompleted(fd)){
 			//System.out.println("Tracker has all file chunks!");
-			mergeChunks(fd);
-			tsc.addFile(fd);
-			// we should delete the chunks
+			if (mergeChunks(fd)){
+				tsc.addFile(fd);
+				// we should delete the chunks
+				//deleteChunks(fd);
+			}
+			else{} // hiba a file osszerakasaban
 		}		
 	}
 
@@ -728,7 +800,17 @@ public class ChunkManager {
 		}
 		RegisterChunkResp resp = new RegisterChunkResp(res, rcr.getPeer());
 		return resp;
-	}	
+	}			
+
+	// the server registers chunks obtained by peers
+	public synchronized void registerObtainedChunk(RegisterPeerChunk rpc){
+		System.out.println("------OBTAINED CHUNK------");		
+		PeerData pd = rpc.getPeer();
+		String key = rpc.getChunkName();
+		PeerList pl = chunkOwners.get(key);
+		pl.addItem(pd);
+		writeOutChunkOwner();
+	}
 	
 	public synchronized ChunkListResp onChunkListRequest(ChunkListReq req){
 		// megnezni, h a chunkkok mely klienseknel van es osszeallitani egy listat
@@ -755,6 +837,18 @@ public class ChunkManager {
 		return resp;
 	}
 	
+	// delete peers file registration from chunkOwners
+	public synchronized void deletePeer(PeerData peerData){
+		Iterator<Entry<String, PeerList>> it = chunkOwners.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			String key = (String) pairs.getKey();
+			PeerList value = (PeerList) pairs.getValue();
+			if (value.contains(peerData))
+				value.removeItem(peerData);
+		}
+	}
+
 	public synchronized void writeoutfileChunks(){
 		System.out.println("Write ou filechunks content, peer side: ");
 		Iterator<Entry<String, ChunkInfo>> it = fileChunks.entrySet().iterator();

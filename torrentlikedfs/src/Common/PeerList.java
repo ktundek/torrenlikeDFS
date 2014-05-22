@@ -29,6 +29,16 @@ public class PeerList implements Serializable{
 		return peerList.get(ind);
 	}
 	
+	public boolean contains(PeerData peer){
+		boolean ok = false;
+		for (int i=0; i<peerList.size(); i++){
+			PeerData pd = peerList.get(i);
+			if (pd.getInetAddress().equals(peer.getInetAddress()) &&
+					pd.getPort()==peer.getPort()) ok = true;
+		}
+		return ok;
+	}
+	
 	public String getPeerData(int ind){
 		PeerData pd = peerList.get(ind);
 		return (String) pd.getInetAddress().toString()+ " : " + pd.getPort();

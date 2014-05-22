@@ -47,8 +47,8 @@ public class Peer implements Constants{
 	private PeerServer peerServer = null;
 	private ChunkManager chunkm = null;
 	private Socket seederSocket = null;
-	private static String peerDir = "C:/PeerClient2/";
-	private static String peerChunkDir = "C:/PeerClientChunk2/";
+	private static String peerDir = "C:/PeerClient/";
+	private static String peerChunkDir = "C:/PeerClientChunk/";
 
 	public Peer(int port) {		
 		try {
@@ -323,12 +323,12 @@ public class Peer implements Constants{
 	
 	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(PEERSERVER_PORT);
-		Peer peer = new Peer(8119);
+		Peer peer = new Peer(8118);
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
 		peer.registerFile(peerDir);
 		peer.registerChunks(peerChunkDir);
-		peer.sendChunkListRequest();
+		//peer.sendChunkListRequest();
 		//peer.sendFileRequest();
 		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			

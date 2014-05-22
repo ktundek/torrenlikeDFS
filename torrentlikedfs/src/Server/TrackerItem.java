@@ -19,6 +19,7 @@ import Messages.RegisterChunkReq;
 import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
+import Messages.RegisterPeerChunk;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
 import Messages.ServerResp;
@@ -136,6 +137,10 @@ public class TrackerItem extends Thread{
 			RegisterChunkResp resp = chunkm.processRegisterChunkRequest(req);
 			chresponse = resp;
 		}
+		else if(request instanceof RegisterPeerChunk){ // REGISTER CHUNKS OBTAINED BY PEER
+			RegisterPeerChunk req = (RegisterPeerChunk)request;
+			chunkm.registerObtainedChunk(req);
+		}
 		else{
 			System.out.println("Unknown message type!");
 		}
@@ -148,6 +153,9 @@ public class TrackerItem extends Thread{
 		//System.out.println("DIE Nr of Peers: "+serverCore.getNrRegisteredPeer());
 		PeerItem peerItem = new PeerItem(this.peerData, this.socket.getPort());
 		serverCore.unregisterPeer(peerItem);
+		chunkm.deletePeer(this.peerData);
+		//System.out.println("---------CHUNKOWNER AFTER DELETION---------");
+		//chunkm.writeOutChunkOwner();
 		System.out.println("TRCK "+nr+": The client has signed out");
 		observer.setIsRunning(false);
 		isRunning = false;
