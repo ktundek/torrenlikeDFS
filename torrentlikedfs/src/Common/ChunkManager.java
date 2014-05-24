@@ -36,20 +36,11 @@ public class ChunkManager {
 	private PeerHandler phandler = null;
 	private String dirr = ""; //read from this directory
 	private String dirw = ""; //write into this directory
-
-	//for peers
-	//private Map <FileData, ChunkInfo>  availableFiles = null;
-	//private Map <String, PeerList> chunkOwners = null;
-
-	// for tracker's file's state
-	//private Map<FileData, ChunkInfo> fileChunks=null;	// file chunk map
-	//private Map<String, FileData> files = null; // <fileCrc, fileData>
+	
 	private Map<String, ChunkInfo> fileChunks=null;	// <fileCrc, ChunkInfo>
 	private Map<String, PeerList> chunkOwners = null; // <chunkName, PeerList>
 
-	public ChunkManager(String dirr, String dirw, Object obj, Object serverObj){
-		//fileChunks = Collections.synchronizedMap(new HashMap<FileData, ChunkInfo>());
-		//files = Collections.synchronizedMap(new HashMap<String, FileData>());
+	public ChunkManager(String dirr, String dirw, Object obj, Object serverObj){		
 		fileChunks = Collections.synchronizedMap(new HashMap<String, ChunkInfo>());
 		chunkOwners = Collections.synchronizedMap(new HashMap<String, PeerList>());
 		if (obj!=null && obj instanceof PeerData) this.peer = (PeerData) obj; 
@@ -103,10 +94,6 @@ public class ChunkManager {
 		}		
 	}
 
-	public void printlnFileChunks(){
-		//Iterator it = fileChunks.
-
-	}
 
 	//private synchronized byte[] readChunk(String fileName, long fileSize, int chunkIndex) {
 	private synchronized byte[] readChunk(FileData fd, int chunkIndex) {
@@ -532,7 +519,9 @@ public class ChunkManager {
 				//we should delete the chunks
 				//deleteChunks(fd);
 			}
-			else{} //ertesiteni kell a klienst, hogy hiba tortent a file osszerakasaban			
+			else{}
+			// TODO
+			//ertesiteni kell a klienst, hogy hiba tortent a file osszerakasaban			
 		}		
 	}
 	
@@ -662,7 +651,9 @@ public class ChunkManager {
 				// we should delete the chunks
 				//deleteChunks(fd);
 			}
-			else{} // hiba a file osszerakasaban
+			else{}
+			// TODO
+			// hiba a file osszerakasaban
 		}		
 	}
 
@@ -812,6 +803,7 @@ public class ChunkManager {
 		writeOutChunkOwner();
 	}
 	
+	// here we create a list of peers who have chunks of a given file
 	public synchronized ChunkListResp onChunkListRequest(ChunkListReq req){
 		// megnezni, h a chunkkok mely klienseknel van es osszeallitani egy listat
 		// ha nincs egy kliensnel sem, akkor a szervertol kell kerni
@@ -827,12 +819,13 @@ public class ChunkManager {
 				String chunkName = getChunkName(fd, i);
 				if (chunkOwners.containsKey(chunkName)){
 					PeerList pl = chunkOwners.get(chunkName);
+					pl.removeItem(peer); 
 					chunkList.put(chunkName, pl);
 				}
 				else chunkList.put(chunkName, null); // if none of the peers has the chunk
 			}
 		}
-		writeOutChunkList(chunkList);
+		//writeOutChunkList(chunkList);
 		ChunkListResp resp = new ChunkListResp(peer, chunkList, fd);
 		return resp;
 	}
