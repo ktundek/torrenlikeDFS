@@ -13,7 +13,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.table.DefaultTableModel;
 
 import Common.ChunkInfo;
 import Common.ChunkManager;
@@ -26,6 +29,8 @@ import Exceptions.UnexpectedMessageException;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
+import Messages.GetFilesReq;
+import Messages.GetFilesResp;
 import Messages.PeerAliveReq;
 import Messages.RegisterChunkReq;
 import Messages.RegisterChunkResp;
@@ -47,17 +52,32 @@ public class Peer implements Constants{
 	private PeerServer peerServer = null;
 	private ChunkManager chunkm = null;
 	private Socket seederSocket = null;
-	private static String peerDir = "C:/PeerClient2/";
-	private static String peerChunkDir = "C:/PeerClientChunk2/";
+	private PeerGUI peergui = null;
+	private static String peerDir = "C:/PeerClient/";
+	private static String peerChunkDir = "C:/PeerClientChunk/";
 
-	public Peer(int port) {		
+	public Peer() {		
 		try {
+			int port = 8119;
+						
 			this.peerData = new PeerData(port, InetAddress.getLocalHost());
 			chunkm = new ChunkManager(peerDir, peerChunkDir, peerData, null);
-			peerServer = new PeerServer(port, this, chunkm);			
+			peerServer = new PeerServer(port, this, chunkm);
+			
+			connectToServer(TRACKER_HOST, TRACKER_PORT);
+			registerFile(peerDir);
+			registerChunks(peerChunkDir);
+			//sendChunkListRequest();
+			//peer.sendFileRequest();
+			//peer.connectoToSeeder(TRACKER_HOST, 8119);
+			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
 		}
+	}
+	
+	public void setGUI(PeerGUI gui){
+		this.peergui = gui;
 	}
 	
 	public void connectToServer(String host, int port) {					
@@ -85,6 +105,7 @@ public class Peer implements Constants{
 				registerPeersChunks(peerChunkDir);
 				System.out.println("AFTER REGISTRATION a PEER HAS: ");
 				chunkm.writeoutfileChunks();
+				handler.sendMessage(new GetFilesReq(this.peerData));
 				//chunkm = new ChunkManager(peerDir, peerData, handler);
 			}
 			else{throw new UnexpectedMessageException("RegisterPeerResp");}
@@ -309,9 +330,9 @@ public class Peer implements Constants{
 		handler.sendMessage(req);	
 	}
 	
-	public synchronized void sendChunkListRequest(){
-		File file = new File("C:/TreckerServer/life.pdf");
-		FileData fd = new FileData(file);
+	public synchronized void sendChunkListRequest(FileData fd){
+		//File file = new File("C:/TreckerServer/life.pdf");
+		//FileData fd = new FileData(file);
 		ChunkListReq req = new ChunkListReq(fd, peerData);
 		handler.sendMessage(req);
 	}
@@ -321,9 +342,33 @@ public class Peer implements Constants{
 		PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
 	}
 	
-	public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
+	public synchronized DefaultTableModel buildTable(){
+		
+		// names of columns
+	    /*Vector<String> columnNames = new Vector<String>();
+	    columnNames.add("File");
+	    columnNames.add("%");*/
+	    
+	    // table content
+	    /*Vector<Vector<Object>> content = new Vector<Vector<Object>>(); 
+	    content.add(chunkm.getFiles(peerDir, peerChunkDir));*/
+	    
+	    //return new DefaultTableModel(content, columnNames);
+		return chunkm.getFiles();
+	}
+	
+	public synchronized void buildServerTable(GetFilesResp gfs){
+		System.out.println("PEER: buildServerTable");
+		peergui.buildServerTable( gfs.getDtm());
+	}
+	
+	public synchronized void updatePeerTable(Vector<Object> rowData){
+		System.out.println("PEER: updatePeerTable");
+		peergui.peerTableRows(rowData);
+	}
+	/*public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(PEERSERVER_PORT);
-		Peer peer = new Peer(8119);
+		//Peer peer = new Peer();
 		//System.out.println("BEFORE_CALL");
 		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
 		peer.registerFile(peerDir);
@@ -332,5 +377,5 @@ public class Peer implements Constants{
 		//peer.sendFileRequest();
 		//peer.connectoToSeeder(TRACKER_HOST, 8119);
 		//System.out.println("AFTER_CALL");			
-	}
+	}*/
 }

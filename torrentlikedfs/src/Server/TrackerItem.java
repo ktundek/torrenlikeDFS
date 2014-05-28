@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
+import javax.swing.table.DefaultTableModel;
+
 import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
@@ -14,6 +16,8 @@ import Messages.ChunkListResp;
 import Messages.ChunkMessage;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
+import Messages.GetFilesReq;
+import Messages.GetFilesResp;
 import Messages.PeerAliveReq;
 import Messages.RegisterChunkReq;
 import Messages.RegisterChunkResp;
@@ -140,6 +144,12 @@ public class TrackerItem extends Thread{
 		else if(request instanceof RegisterPeerChunk){ // REGISTER CHUNKS OBTAINED BY PEER
 			RegisterPeerChunk req = (RegisterPeerChunk)request;
 			chunkm.registerObtainedChunk(req);
+		}
+		else if(request instanceof GetFilesReq){
+			DefaultTableModel dtm = chunkm.getFilesServer();
+			GetFilesResp resp = new GetFilesResp(((GetFilesReq) request).getPeerInfo());
+			resp.setDtm(dtm);
+			chresponse = resp;
 		}
 		else{
 			System.out.println("Unknown message type!");

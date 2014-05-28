@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Vector;
+
+import javax.swing.table.DefaultTableModel;
+
 import org.apache.commons.io.IOUtils;
 
 import Client.PeerData;
@@ -31,7 +35,7 @@ import Server.TrackerServerCore;
 
 public class ChunkManager {	
 	private PeerData peer = null;
-	private TrackerServer trackers = null;
+	//private TrackerServer trackers = null;
 	private TrackerServerCore tsc = null;
 	private PeerHandler phandler = null;
 	private String dirr = ""; //read from this directory
@@ -381,7 +385,7 @@ public class ChunkManager {
 		finally{
 			try {
 				bw.close();
-				fw.close();				
+				fw.close();					
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -500,6 +504,7 @@ public class ChunkManager {
 			writeChunk(fd, chunkNr, data);
 			registerPeerChunks(this.peer, getChunkName(fd, chunkNr), chunkNr);
 			createFileDescriptor(fd);
+			updatePeerFileList(fd);
 			writeoutfileChunk(fd.getCrc(), fd);
 		}
 		else{
@@ -509,6 +514,7 @@ public class ChunkManager {
 				ci.setState(chunkNr, ChunkState.COMPLETED);
 				writeChunk(fd, chunkNr, data);
 				registerPeerChunks(this.peer, getChunkName(fd, chunkNr), chunkNr);
+				updatePeerFileList(fd);
 			}
 			writeoutfileChunk(fd.getCrc(), fd);
 		}		
@@ -590,6 +596,113 @@ public class ChunkManager {
 				}
 			}
 		}
+	}
+
+	// fill Peer's table
+	public synchronized DefaultTableModel getFiles(){
+		DefaultTableModel dtm = new DefaultTableModel();
+		Vector<Vector<Object>> data = new Vector<Vector<Object>>(); 
+		Vector<Object> row = new Vector<Object>(); 	
+
+		// names of columns
+		Vector<String> columnNames = new Vector<String>();
+		columnNames.add("File");
+		columnNames.add("%");
+
+		// whole files
+		File folder = new File(dirr);
+		File[] fileList = folder.listFiles();
+		FileData fd = null;
+		int per = 0;
+
+		for (int i=0; i<fileList.length; i++){
+			if (fileList[i].isFile()){
+				fd = new FileData(fileList[i]); 
+				per = getDownloadPercentage(fd);				
+				row.add(fd.getName());
+				row.add(per);
+
+				data.add(row);
+			}
+		}
+
+		// chunks
+		File folder2 = new File(dirw);
+		File[] fileList2 = folder2.listFiles();
+		FileData fd2 = null;
+		row = new Vector<Object>();
+		String [] desc = null;
+		per = 0;
+		for (int i=0; i<fileList2.length;i++){
+			if (getFileExtention(fileList2[i].getName()).equals("dsc")){
+
+				desc = getDescData(fileList2[i]); // filename, size, crc, nrofchunks
+				String fName = desc[0];
+				String fSize = desc[1];
+				String fCrc = desc[2];
+				int fChunkNr = Integer.parseInt(desc[3]);				
+
+				fd2 = new FileData();
+				fd2.setName(fName);
+				fd2.setSize(Long.valueOf(fSize));
+				fd2.setCrc(fCrc);
+
+				per = getDownloadPercentage(fd2);		
+				System.out.println("-------- TABLE: "+ fName+", "+ fSize+", %: "+ per);
+				row.add(fName);
+				row.add(per);
+
+				data.add(row);
+			}
+		}
+
+		dtm.setDataVector(data, columnNames);
+		return dtm;
+	}
+	
+	
+	public synchronized void updatePeerFileList(FileData fd){
+		Vector<Object> row = new Vector<Object>();
+		int per = getDownloadPercentage(fd);				
+		row.add(fd.getName());
+		row.add(per);
+		phandler.updateTable(row);
+	}
+	
+	public String getFileExtention(String fileName){
+		String ext = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+		return ext;
+	}
+
+	public String[] getDescData(File file){		
+		String[] res = new String[4]; 
+
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(file)); 
+			String line = null;
+			int ind = 0;
+			while ((line = reader.readLine()) != null) {
+				res[ind] = line;
+				//System.out.println("DESC data: "+ind+" "+res[ind]);
+				ind++;
+			}			    
+		} catch (IOException x) {
+			System.err.println(x);
+		}
+
+		return res;
+	}
+
+	public int getDownloadPercentage(FileData fileData)
+	{
+		ChunkInfo ci = fileChunks.get(fileData.getCrc());
+		int num_completed = 0;
+		for(int i=0;i<ci.nrChunks();i++)
+		{
+			if (ci.getState(i).equals(ChunkState.COMPLETED)) num_completed++;
+		}
+
+		return 100 * num_completed / ci.nrChunks();
 	}
 
 	//-------------------------------------- End Peer methods --------------------------------------//	
@@ -841,6 +954,40 @@ public class ChunkManager {
 				value.removeItem(peerData);
 		}
 	}
+	
+	
+	public synchronized DefaultTableModel getFilesServer(){
+		DefaultTableModel dtm = new DefaultTableModel();
+		Vector<Vector<Object>> data = new Vector<Vector<Object>>(); 		
+
+		// names of columns
+		Vector<String> columnNames = new Vector<String>();
+		columnNames.add("File");
+		columnNames.add("Size in bytes");
+		columnNames.add("Crc");
+
+		// whole files
+		File folder = new File(dirr);
+		File[] fileList = folder.listFiles();
+		FileData fd = null;
+		int per = 0;
+
+		for (int i=0; i<fileList.length; i++){
+			if (fileList[i].isFile()){
+				fd = new FileData(fileList[i]); 
+				Vector<Object> row = new Vector<Object>(); 	
+				row.add(fd.getName());
+				row.add(fd.getSize());
+				row.add(fd.getCrc());
+				System.out.println("---------------------------------Name: "+fd.getName()+", size: "+fd.getSize());
+				data.add(row);
+			}
+		}		
+
+		dtm.setDataVector(data, columnNames);
+		return dtm;
+	}
+
 
 	public synchronized void writeoutfileChunks(){
 		System.out.println("Write ou filechunks content, peer side: ");

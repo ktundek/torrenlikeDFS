@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Vector;
 
 import Common.ChunkManager;
 import Common.FileDataListClient;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
+import Messages.GetFilesResp;
 import Messages.PeerAliveReq;
 import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
@@ -119,10 +121,18 @@ public class PeerHandler extends Thread{
 				ChunkListResp chunkList = (ChunkListResp)response;
 				peer.downloadAFile(chunkList);
 			}
+			else if(response instanceof GetFilesResp){
+				System.out.println("PEERHANDLER: GetFilesResp");
+				peer.buildServerTable((GetFilesResp)response);
+			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");
 		}
 		else 
 			System.out.println("PEERHANDLER: the response is empty");
+	}
+	
+	public synchronized void updateTable(Vector<Object> row){
+		peer.updatePeerTable(row);
 	}
 }
