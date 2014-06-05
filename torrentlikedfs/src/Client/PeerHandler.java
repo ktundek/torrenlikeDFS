@@ -18,6 +18,7 @@ import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
+import Messages.ServerFilesUpdate;
 import Messages.ServerListRespMessages;
 import Messages.ServerResp;
 import Messages.ServerRespMessageItems;
@@ -125,6 +126,9 @@ public class PeerHandler extends Thread{
 				System.out.println("PEERHANDLER: GetFilesResp");
 				peer.buildServerTable((GetFilesResp)response);
 			}
+			else if (response instanceof ServerFilesUpdate){				
+				peer.updateServerTable((ServerFilesUpdate)response);
+			}
 			else
 				System.out.println("PEERHANDLER: Other type of message");
 		}
@@ -132,7 +136,13 @@ public class PeerHandler extends Thread{
 			System.out.println("PEERHANDLER: the response is empty");
 	}
 	
-	public synchronized void updateTable(Vector<Object> row){
+	// update peer's file table
+	public synchronized void updatePeerTable(Vector<Object> row){
 		peer.updatePeerTable(row);
 	}
+	
+	// update server's file table
+	/*public synchronized void updateServerTable(Vector<Object> row){
+		peer.updateServerTable(row);
+	}*/
 }

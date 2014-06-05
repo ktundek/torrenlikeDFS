@@ -18,8 +18,6 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
-import org.apache.commons.io.IOUtils;
-
 import Client.PeerData;
 import Client.PeerHandler;
 import Messages.ChunkListReq;
@@ -30,12 +28,13 @@ import Messages.RegisterChunkReq;
 import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
 import Messages.RegisterPeerChunk;
+import Messages.ServerFilesUpdate;
 import Server.TrackerServer;
 import Server.TrackerServerCore;
 
 public class ChunkManager {	
 	private PeerData peer = null;
-	//private TrackerServer trackers = null;
+	private TrackerServer trackerserver = null;
 	private TrackerServerCore tsc = null;
 	private PeerHandler phandler = null;
 	private String dirr = ""; //read from this directory
@@ -47,9 +46,11 @@ public class ChunkManager {
 	public ChunkManager(String dirr, String dirw, Object obj, Object serverObj){		
 		fileChunks = Collections.synchronizedMap(new HashMap<String, ChunkInfo>());
 		chunkOwners = Collections.synchronizedMap(new HashMap<String, PeerList>());
-		if (obj!=null && obj instanceof PeerData) this.peer = (PeerData) obj; 
+		
+		if (obj!=null && obj instanceof PeerData) this.peer = (PeerData) obj;
+		else if (obj!=null && obj instanceof TrackerServer) this.trackerserver = (TrackerServer) obj; 
 		if (serverObj!=null && serverObj instanceof TrackerServerCore) this.tsc = (TrackerServerCore) serverObj;
-		//this.phandler = phandler;
+		
 		this.dirr = dirr;
 		this.dirw = dirw;
 
@@ -307,7 +308,7 @@ public class ChunkManager {
 		boolean ok = false;
 		File file = new File(dirr + fileName);
 		FileData fd = new FileData(file);
-		if (fd.getCrc().equals(fileName)) ok = true;
+		if (fd.getCrc().equals(crc)) ok = true;
 		return ok;
 	}
 	
@@ -560,6 +561,20 @@ public class ChunkManager {
 		}
 		System.out.println("CHUNKMANAGER: processFileListChunkReq");		
 	}
+	
+	public synchronized void sendNewFileChunks(FileData fd){
+		ChunkResp resp =null;
+		byte[] chunk;
+		for (int i=0; i<fd.getChunkNumber();i++){
+			chunk = getChunkData(fd, i);								
+
+			resp = new ChunkResp(peer);
+			resp.setChunkNr(i);
+			resp.setData(chunk);
+			resp.setFd(fd);
+			phandler.sendMessage(resp);
+		}
+	}
 
 	public synchronized void processChunkListReq(RegisterChunkResp rcr){
 		System.out.println("CHUNKMANAGER: processChunkListReq");
@@ -601,12 +616,12 @@ public class ChunkManager {
 	// fill Peer's table
 	public synchronized DefaultTableModel getFiles(){
 		DefaultTableModel dtm = new DefaultTableModel();
-		Vector<Vector<Object>> data = new Vector<Vector<Object>>(); 
-		Vector<Object> row = new Vector<Object>(); 	
+		Vector<Vector<Object>> data = new Vector<Vector<Object>>(); 		
 
 		// names of columns
 		Vector<String> columnNames = new Vector<String>();
 		columnNames.add("File");
+		columnNames.add("Size in bytes");
 		columnNames.add("%");
 
 		// whole files
@@ -617,11 +632,13 @@ public class ChunkManager {
 
 		for (int i=0; i<fileList.length; i++){
 			if (fileList[i].isFile()){
-				fd = new FileData(fileList[i]); 
+				fd = new FileData(fileList[i]);
+				Vector<Object> row = new Vector<Object>(); 
 				per = getDownloadPercentage(fd);				
 				row.add(fd.getName());
+				row.add(fd.getSize());
 				row.add(per);
-
+				System.out.println("&&&&&&: "+fd.getName()+", "+fd.getSize());
 				data.add(row);
 			}
 		}
@@ -630,11 +647,12 @@ public class ChunkManager {
 		File folder2 = new File(dirw);
 		File[] fileList2 = folder2.listFiles();
 		FileData fd2 = null;
-		row = new Vector<Object>();
+		Vector<Object> row = new Vector<Object>(); 
 		String [] desc = null;
 		per = 0;
 		for (int i=0; i<fileList2.length;i++){
 			if (getFileExtention(fileList2[i].getName()).equals("dsc")){
+				row = new Vector<Object>();
 
 				desc = getDescData(fileList2[i]); // filename, size, crc, nrofchunks
 				String fName = desc[0];
@@ -648,8 +666,9 @@ public class ChunkManager {
 				fd2.setCrc(fCrc);
 
 				per = getDownloadPercentage(fd2);		
-				System.out.println("-------- TABLE: "+ fName+", "+ fSize+", %: "+ per);
+				//System.out.println("-------- TABLE: "+ fName+", "+ fSize+", %: "+ per);
 				row.add(fName);
+				row.add(fSize);
 				row.add(per);
 
 				data.add(row);
@@ -659,19 +678,45 @@ public class ChunkManager {
 		dtm.setDataVector(data, columnNames);
 		return dtm;
 	}
-	
-	
+
+
 	public synchronized void updatePeerFileList(FileData fd){
 		Vector<Object> row = new Vector<Object>();
 		int per = getDownloadPercentage(fd);				
 		row.add(fd.getName());
+		row.add(fd.getSize());
+		row.add(per);
+		phandler.updatePeerTable(row);
+	}	
+
+	/*public synchronized void addNewFilePeerFileList(FileData fd){
+		Vector<Object> row = new Vector<Object>();
+		int per = getDownloadPercentage(fd);				
+		row.add(fd.getName());
+		row.add(fd.getSize());
 		row.add(per);
 		phandler.updateTable(row);
-	}
-	
+	}*/
+
 	public String getFileExtention(String fileName){
 		String ext = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
 		return ext;
+	}
+	
+	// when user uploads a new file
+	public void addNewFile(FileData fd){		
+		if (!fileChunks.containsKey(fd.getCrc())){			
+			ChunkInfo ci = new ChunkInfo(fd.getChunkNumber());
+			for (int i=0; i<fd.getChunkNumber();i++){
+				ci.setState(i, ChunkState.COMPLETED);
+			}			
+			fileChunks.put(fd.getCrc(), ci);
+			updatePeerFileList(fd);
+			//writeoutfileChunks();
+		}
+		else{
+			// TODO kellene szolni a peernek h mar van ilyen fajlja
+		}
 	}
 
 	public String[] getDescData(File file){		
@@ -716,9 +761,9 @@ public class ChunkManager {
 		int chunkNr = resp.getChunkNr();
 		byte[] data = resp.getData();		
 		
-		System.out.println("onChunkRespTracker kiiratas: ");
-		writeoutfileChunks();
-		System.out.println("onChunkRespTracker kiiratas vege!");
+		//System.out.println("onChunkRespTracker kiiratas: ");
+		//writeoutfileChunks();
+		//System.out.println("onChunkRespTracker kiiratas vege!");
 		
 		if (!fileChunks.containsKey(fd.getCrc())){
 			//files.put(fd.getCrc(), fd);
@@ -747,7 +792,8 @@ public class ChunkManager {
 			if (chunkOwners.containsKey(qwer)){
 				System.out.println("CONTAINS CHUNKNAME!!!");
 				PeerList pl = chunkOwners.get(getChunkName(fd, chunkNr));
-				pl.addItem(resp.getPeerInfo());				
+				if (!pl.contains(resp.getPeerInfo()))
+					pl.addItem(resp.getPeerInfo());				
 			}
 			else{
 				PeerList pl = new PeerList();
@@ -756,18 +802,22 @@ public class ChunkManager {
 			}
 			//writeoutfileChunk(fd.getCrc(), fd);
 		}	
-		writeOutChunkOwner();
-		if (isAllChunksCompleted(fd)){
-			//System.out.println("Tracker has all file chunks!");
-			if (mergeChunks(fd)){
-				tsc.addFile(fd);
-				// we should delete the chunks
-				//deleteChunks(fd);
+		//writeOutChunkOwner();
+		if (descFileExists(fd)){
+			if (isAllChunksCompleted(fd)){
+				//System.out.println("Tracker has all file chunks!");
+				if (mergeChunks(fd)){
+					tsc.addFile(fd);
+					// we should delete the chunks
+					//deleteChunks(fd);
+					System.out.println("Itt kellene ertesiteni az osszes peert, hogy a szerveren uj fajl van!!!!!!!!");
+					trackerserver.notifyTrackerItems(getFileDataForTableRow(fd));
+				}
+				else{}
+				// TODO
+				// hiba a file osszerakasaban
 			}
-			else{}
-			// TODO
-			// hiba a file osszerakasaban
-		}		
+		}
 	}
 
 	// the server registers the peers files
@@ -950,9 +1000,30 @@ public class ChunkManager {
 			Map.Entry pairs = (Map.Entry)it.next();
 			String key = (String) pairs.getKey();
 			PeerList value = (PeerList) pairs.getValue();
-			if (value.contains(peerData))
+			//if (value.contains(peerData)){
+			while (value.contains(peerData)){
+				System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the Old list:");
+				//writeOutChunkOwner();
+				//writeoutfileChunks();
 				value.removeItem(peerData);
+				System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the New list:");
+				//writeOutChunkOwner();
+				//writeoutfileChunks();
+			}
 		}
+	}
+	
+	// when the peer uploads a new file
+	/*public synchronized void uploadNewFile(){
+		
+	}*/
+	
+	// returns true if the specifies dsc file exists, else returns false
+	public synchronized boolean descFileExists(FileData fd){
+		boolean exists = false;
+		File f = new File(dirw+fd.getCrc().toString()+".dsc");
+		if(f.exists()) exists = true;		
+		return exists;
 	}
 	
 	
@@ -986,8 +1057,18 @@ public class ChunkManager {
 
 		dtm.setDataVector(data, columnNames);
 		return dtm;
-	}
+	}	
 
+	// when the server gets a new file, we have to notify the peers
+	public synchronized ServerFilesUpdate getFileDataForTableRow(FileData fd){
+		Vector<Object> row = new Vector<Object>();			
+		row.add(fd.getName());
+		row.add(fd.getSize());
+		row.add(fd.getCrc());
+		ServerFilesUpdate msgUpdate = new ServerFilesUpdate(null);
+		msgUpdate.setRow(row);
+		return msgUpdate;
+	}
 
 	public synchronized void writeoutfileChunks(){
 		System.out.println("Write ou filechunks content, peer side: ");

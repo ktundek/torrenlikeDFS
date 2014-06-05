@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -23,10 +24,12 @@ public class PeerGUI{
 	private JPanel panel_up, panel_down;
 	private JLabel label_p, label_s; 
 	private JTable table_p, table_s;
-	private JButton button;
+	private JButton button_down, button_up;
+	private JFileChooser chooser;
 	
 	public PeerGUI(Peer peer){
 		this.peer = peer;
+		//createDialog();
 	}
 	
 	public void createDialog(){
@@ -53,13 +56,27 @@ public class PeerGUI{
 		JScrollPane sp = new JScrollPane(table_p);
 		sp.setPreferredSize(new Dimension(300, 200));
 		panel_up.add(sp, BorderLayout.CENTER);
+		button_up = new JButton("Upload new file");
+		button_up.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				chooser = new JFileChooser();
+				chooser.setDialogTitle("Choose a file");
+				int returnVal = chooser.showOpenDialog(frame);
+				if (returnVal == JFileChooser.APPROVE_OPTION){
+					System.out.println("You chose to open this file: " +chooser.getSelectedFile().getName());
+					 peer.copyFile(chooser.getSelectedFile(), chooser.getSelectedFile().getName());
+				}
+			}
+		});
+		
+		panel_up.add(button_up, BorderLayout.SOUTH);
 		
 		// lower part
 		label_s.setText("Available files on server:");
 		panel_down.add(label_s, BorderLayout.NORTH);		
-		button = new JButton("Download");
-		button.setSize(new Dimension(50, 5));		
-		button.addActionListener(new ActionListener() {
+		button_down = new JButton("Download");
+		button_down.setSize(new Dimension(50, 5));		
+		button_down.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!(table_s.getSelectedRows().length==0)){
 					int selectedRowIndex = table_s.getSelectedRow();
@@ -79,7 +96,7 @@ public class PeerGUI{
 					// ertesiteni kell a peert, h valasszon ki egy sort
 				}
 			}});
-		panel_down.add(button, BorderLayout.SOUTH);
+		panel_down.add(button_down, BorderLayout.SOUTH);
 
 
 		frame.setVisible(true);
@@ -90,7 +107,7 @@ public class PeerGUI{
 		
 	
 	public void buildServerTable(DefaultTableModel dtm){
-		createDialog();
+		createDialog();		
 		table_s = new JTable(dtm);
 		panel_down.add(new JScrollPane(table_s), BorderLayout.CENTER);
 		
@@ -101,20 +118,26 @@ public class PeerGUI{
 	public void peerTableRows(Vector<Object> rowData){
 		String fileName = rowData.get(0).toString();
 		//String fileSize = "";
-		String value = rowData.get(1).toString();
+		String value = rowData.get(2).toString();
 		System.out.println("PEER GUI: peerTableRows: file:"+fileName+", update value:"+value);
 		boolean find = false;
 		DefaultTableModel dtm = (DefaultTableModel) table_p.getModel();
 		int lenght = dtm.getRowCount();
 		for (int i=0;i<lenght;i++){
 			if (dtm.getValueAt(i, 0).equals(fileName)){ // update
-				dtm.setValueAt(value, i, 1);
+				dtm.setValueAt(value, i, 2);
 				find = true;
 			}				
 		}
 		if (!find){ // insert
 			dtm.addRow(rowData);
 		}
+	}
+	
+	// add a new line to server's table
+	public void serverTableRows(Vector<Object> rowData){
+		DefaultTableModel dtm = (DefaultTableModel) table_s.getModel();
+		dtm.addRow(rowData);
 	}
 	
 	

@@ -3,6 +3,7 @@ package Server;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Hashtable;
+import java.util.Vector;
 import java.io.*;
 
 import Common.ChunkInfo;
@@ -12,12 +13,16 @@ import Common.Constants;
 import Common.FileData;
 import Common.FileDataListClient;
 import Messages.RegisterChunkReq;
+import Messages.ServerFilesUpdate;
 
 public class TrackerServer implements Constants{
 	//private ServerSocket serverSocket;
 	//private TrackerServerCore tcs;
+	private Vector<TrackerItem> trackers = null;
 
-	public TrackerServer() {}
+	public TrackerServer() {
+		trackers = new Vector<TrackerItem>();
+	}
 	
 	private void registerTrackerFiles(String directory){
 		FileDataListClient fdl = new FileDataListClient();
@@ -128,6 +133,14 @@ public class TrackerServer implements Constants{
 		
 		return res;
 	}
+	
+	public synchronized void notifyTrackerItems(ServerFilesUpdate sfu){
+		for (int i=0; i<trackers.size(); i++){
+			System.out.println("TRACKERSERVER: Notify all peers about the new file");
+			TrackerItem ti = trackers.get(i);
+			ti.notifyPeer(sfu);
+		}
+	}
 			
 	
 	public static void main(String args[]){
@@ -141,7 +154,7 @@ public class TrackerServer implements Constants{
 		ServerSocket serverSocket = null;
 		TrackerServerCore tsc = new TrackerServerCore();
 		
-		ChunkManager chunkm = new ChunkManager(dirr, dirw, null, tsc);
+		ChunkManager chunkm = new ChunkManager(dirr, dirw, ts, tsc);
 		
 		fdl = ts.getFileList(dirr);
 		tsc.addFileList(fdl);
@@ -171,7 +184,8 @@ public class TrackerServer implements Constants{
 				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tsc, System.currentTimeMillis(), socket.getPort(), serverItemNr);
-				TrackerItem ti = new TrackerItem(socket, tsc, observer, chunkm, serverItemNr);					
+				TrackerItem ti = new TrackerItem(socket, tsc, observer, chunkm, serverItemNr);
+				ts.trackers.add(ti);
 			} 
 			catch (IOException e) {
 				System.out.println("Connection is not accepted");

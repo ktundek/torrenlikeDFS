@@ -2,12 +2,16 @@ package Client;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +42,7 @@ import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
+import Messages.ServerFilesUpdate;
 import Messages.UnRegisterPeerReq;
 import Common.Constants;
 
@@ -362,10 +367,54 @@ public class Peer implements Constants{
 		peergui.buildServerTable( gfs.getDtm());
 	}
 	
+	// update row or insert a new row
 	public synchronized void updatePeerTable(Vector<Object> rowData){
 		System.out.println("PEER: updatePeerTable");
 		peergui.peerTableRows(rowData);
 	}
+	
+	public synchronized void updateServerTable(ServerFilesUpdate sfu){
+		System.out.println("PEER: updateSeerverTable");
+		Vector<Object> rowData = sfu.getRow();
+		peergui.serverTableRows(rowData);
+	}
+
+	// copies the given file into peers folder
+	public void copyFile(File source, String fileName){
+		File dest = new File(peerDir+fileName);		
+		InputStream input = null;
+		OutputStream output = null;
+
+		try {
+			input = new FileInputStream(source);
+			output = new FileOutputStream(dest);
+			byte[] buf = new byte[1024];
+			int bytesRead;
+			while ((bytesRead = input.read(buf)) > 0) {
+				output.write(buf, 0, bytesRead);
+			}
+			FileData fd = new FileData(dest);
+			chunkm.addNewFile(fd);
+			chunkm.sendNewFileChunks(fd);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}			
+		finally {
+			try {
+				input.close();
+				output.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+	}
+
+
 	/*public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(PEERSERVER_PORT);
 		//Peer peer = new Peer();

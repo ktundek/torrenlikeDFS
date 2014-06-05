@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
+import Common.FileData;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkMessage;
@@ -26,6 +27,7 @@ import Messages.RegisterGroupResp;
 import Messages.RegisterPeerChunk;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
+import Messages.ServerFilesUpdate;
 import Messages.ServerResp;
 import Messages.ServerRespMessageItems;
 import Messages.ServerRespMessages;
@@ -38,12 +40,21 @@ public class TrackerItem extends Thread{
 	private ClientObserver observer;
 	private ChunkManager chunkm;
 	private PeerData peerData;
+	private ObjectOutputStream out = null;
+	private ObjectInputStream in = null;
 	private boolean isRunning = true;
 	private int nr; 
 
 	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer, ChunkManager chunkm, int nr) {
 		super();
 		this.socket = socket;
+		try {
+			this.in = new ObjectInputStream(socket.getInputStream());
+			this.out = new ObjectOutputStream(socket.getOutputStream());
+		} catch (IOException e) {
+			System.out.println("TrackerItem: Error creating ObjectInputStream/ObjectOutputStream!");
+			//e.printStackTrace();
+		}		
 		this.serverCore = serverCore;
 		this.observer = observer;
 		this.chunkm = chunkm;
@@ -51,22 +62,34 @@ public class TrackerItem extends Thread{
 		this.start();		
 	}
 	
+	public synchronized void sendMessage(Object obj){
+		try {			
+			out.writeObject(obj);
+			out.flush();
+		} catch (IOException e) {
+			System.out.println("PEERHANDLER: error in sending message!");
+			e.printStackTrace();
+		}
+		//this.obj= obj; 
+	}
+	
 	public void run(){
 		Object req = null;
 		Object resp = null;
-		ObjectOutputStream out = null;
-		ObjectInputStream in = null;
+		//ObjectOutputStream out = null;
+		//ObjectInputStream in = null;
 		
 		try {
-			out = new ObjectOutputStream(socket.getOutputStream());
+			//out = new ObjectOutputStream(socket.getOutputStream());
 			out.flush();
-			in = new ObjectInputStream(socket.getInputStream());
+			//in = new ObjectInputStream(socket.getInputStream());
 			System.out.println("TRACKER ITEM");
 			
 			while(isRunning){
 				req = in.readObject();				
 				resp = getResponse(req);				
-				out.writeObject(resp);				
+				//out.writeObject(resp);
+				sendMessage(resp);
 			}
 			
 		} catch (IOException e) {			
@@ -157,7 +180,12 @@ public class TrackerItem extends Thread{
 		
 		if (response==null) return chresponse; 
 		else return response;
-	}	
+	}
+	
+	public void notifyPeer(ServerFilesUpdate sfu){
+		//chunkm.notifyPeer(fd);
+		sendMessage(sfu);
+	}
 	
 	public void dieThreads(){		
 		//System.out.println("DIE Nr of Peers: "+serverCore.getNrRegisteredPeer());
