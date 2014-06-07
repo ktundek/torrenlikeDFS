@@ -165,7 +165,7 @@ public class TrackerServer implements Constants{
 		chunkm.writeoutfileChunks();
 		//chunkm.writeOutChunkOwner();
 		
-		int port = 9000;
+		//int port = 9000;
 		Socket socket = null;			
 		int serverItemNr = 0;
 		

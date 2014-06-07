@@ -89,7 +89,8 @@ public class ChunkManager {
 
 		FileData fd = null;
 		ChunkInfo ci = null;
-
+		
+		if (fileList!=null)
 		for (int i=0; i<fileList.length; i++){
 			fd = new FileData(fileList[i]);
 			ci = new ChunkInfo(fd.getChunkNumber());
@@ -454,6 +455,10 @@ public class ChunkManager {
 		this.phandler = phandler;
 	}
 
+	public ChunkInfo getFileChunkInfo(FileData fd){		
+		return fileChunks.get(fd.getCrc());
+	}
+	
 	// peer register its own files
 	public void initializePeerFileList(FileDataListClient fdl){		
 		for (int i=0; i<fdl.getSize();i++){
@@ -630,6 +635,7 @@ public class ChunkManager {
 		FileData fd = null;
 		int per = 0;
 
+		if (fileList!=null)
 		for (int i=0; i<fileList.length; i++){
 			if (fileList[i].isFile()){
 				fd = new FileData(fileList[i]);
@@ -638,7 +644,7 @@ public class ChunkManager {
 				row.add(fd.getName());
 				row.add(fd.getSize());
 				row.add(per);
-				System.out.println("&&&&&&: "+fd.getName()+", "+fd.getSize());
+				//System.out.println("&&&&&&: "+fd.getName()+", "+fd.getSize());
 				data.add(row);
 			}
 		}
@@ -650,6 +656,8 @@ public class ChunkManager {
 		Vector<Object> row = new Vector<Object>(); 
 		String [] desc = null;
 		per = 0;
+		
+		if (fileList2!=null)
 		for (int i=0; i<fileList2.length;i++){
 			if (getFileExtention(fileList2[i].getName()).equals("dsc")){
 				row = new Vector<Object>();
@@ -665,8 +673,7 @@ public class ChunkManager {
 				fd2.setSize(Long.valueOf(fSize));
 				fd2.setCrc(fCrc);
 
-				per = getDownloadPercentage(fd2);		
-				//System.out.println("-------- TABLE: "+ fName+", "+ fSize+", %: "+ per);
+				per = getDownloadPercentage(fd2);						
 				row.add(fName);
 				row.add(fSize);
 				row.add(per);
@@ -679,7 +686,7 @@ public class ChunkManager {
 		return dtm;
 	}
 
-
+	// update peer's file list
 	public synchronized void updatePeerFileList(FileData fd){
 		Vector<Object> row = new Vector<Object>();
 		int per = getDownloadPercentage(fd);				
@@ -688,15 +695,7 @@ public class ChunkManager {
 		row.add(per);
 		phandler.updatePeerTable(row);
 	}	
-
-	/*public synchronized void addNewFilePeerFileList(FileData fd){
-		Vector<Object> row = new Vector<Object>();
-		int per = getDownloadPercentage(fd);				
-		row.add(fd.getName());
-		row.add(fd.getSize());
-		row.add(per);
-		phandler.updateTable(row);
-	}*/
+	
 
 	public String getFileExtention(String fileName){
 		String ext = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
@@ -1002,11 +1001,11 @@ public class ChunkManager {
 			PeerList value = (PeerList) pairs.getValue();
 			//if (value.contains(peerData)){
 			while (value.contains(peerData)){
-				System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the Old list:");
+				//System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the Old list:");
 				//writeOutChunkOwner();
 				//writeoutfileChunks();
 				value.removeItem(peerData);
-				System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the New list:");
+				//System.out.println("The server found the peer and deleted it from the chunkOwners. Here is the New list:");
 				//writeOutChunkOwner();
 				//writeoutfileChunks();
 			}
@@ -1043,6 +1042,7 @@ public class ChunkManager {
 		FileData fd = null;
 		int per = 0;
 
+		if (fileList!=null)
 		for (int i=0; i<fileList.length; i++){
 			if (fileList[i].isFile()){
 				fd = new FileData(fileList[i]); 

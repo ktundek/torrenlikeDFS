@@ -8,17 +8,12 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.*;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -28,22 +23,18 @@ import Common.ChunkState;
 import Common.FileData;
 import Common.FileDataListClient;
 import Common.Group;
-import Exceptions.UnableToReadFileException;
+import Common.Test;
 import Exceptions.UnexpectedMessageException;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
 import Messages.GetFilesReq;
 import Messages.GetFilesResp;
-import Messages.PeerAliveReq;
 import Messages.RegisterChunkReq;
-import Messages.RegisterChunkResp;
 import Messages.RegisterGroupReq;
-import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;
 import Messages.RegisterPeerResp;
 import Messages.ServerFilesUpdate;
-import Messages.UnRegisterPeerReq;
 import Common.Constants;
 
 public class Peer implements Constants{
@@ -58,12 +49,15 @@ public class Peer implements Constants{
 	private ChunkManager chunkm = null;
 	private Socket seederSocket = null;
 	private PeerGUI peergui = null;
-	private static String peerDir = "C:/PeerClient/";
-	private static String peerChunkDir = "C:/PeerClientChunk/";
+	private static String peerDir = "";
+	private static String peerChunkDir = "";
 
-	public Peer() {		
+	public Peer(PeerGUI peergui) {		
 		try {
 			int port = 8119;
+			this.peergui = peergui;
+			System.out.println(System.getProperty("os.name"));
+			setDirectories();
 						
 			this.peerData = new PeerData(port, InetAddress.getLocalHost());
 			chunkm = new ChunkManager(peerDir, peerChunkDir, peerData, null);
@@ -72,6 +66,7 @@ public class Peer implements Constants{
 			connectToServer(TRACKER_HOST, TRACKER_PORT);
 			registerFile(peerDir);
 			registerChunks(peerChunkDir);
+			completeFileDownloading(peerChunkDir);
 			//sendChunkListRequest();
 			//peer.sendFileRequest();
 			//peer.connectoToSeeder(TRACKER_HOST, 8119);
@@ -83,6 +78,18 @@ public class Peer implements Constants{
 	
 	public void setGUI(PeerGUI gui){
 		this.peergui = gui;
+	}
+	
+	public void setDirectories(){
+		String os = System.getProperty("os.name").toLowerCase();
+		if (os.contains("windows")){
+			peerDir = "C:/PeerClient/";
+			peerChunkDir = "C:/PeerClientChunk/";
+		}
+		if (os.contains("ubuntu")){
+			peerDir = "/PeerClient/";
+			peerChunkDir = "/PeerClientChunk/";
+		}
 	}
 	
 	public void connectToServer(String host, int port) {					
@@ -164,7 +171,8 @@ public class Peer implements Constants{
 		File folder = new File(folderName);
 		File[] chunkList = folder.listFiles();
 		String [] desc = null;
-				
+		
+		if (chunkList!=null)
 		if (chunkList.length!=0){			
 			chunks = new Hashtable<String, ChunkInfo>();			
 			for (int i=0; i<chunkList.length; i++){
@@ -223,17 +231,15 @@ public class Peer implements Constants{
 	
 	// beregisztralja a szerverre a meglevo chunkokat
 	public synchronized void registerChunks(String folderName){
-		System.out.println("PEER: Register Chunks");
-		//Map<String, ChunkInfo> chunks = null;
+		System.out.println("PEER: Register Chunks");		
 		Hashtable<String, ChunkInfo> chunks = null;
 		Hashtable<String, FileData> files = null;
 		File folder = new File(folderName);
 		File[] chunkList = folder.listFiles();
 		String [] desc = null;
 		
-		
-		if (chunkList.length!=0){
-			//chunks = new HashMap<String, ChunkInfo>();
+		if (chunkList!=null)
+		if (chunkList.length!=0){			
 			chunks = new Hashtable<String, ChunkInfo>();
 			files = new Hashtable<String, FileData>();
 			for (int i=0; i<chunkList.length; i++){
@@ -249,8 +255,7 @@ public class Peer implements Constants{
 					fd.setName(fName);
 					fd.setSize(Long.valueOf(fSize));
 					fd.setCrc(fCrc);
-					files.put(fCrc, fd);
-					//System.out.println("DESC PARAMETERS:"+fName+", "+fSize+", "+fCrc+", "+fChunkNr);
+					files.put(fCrc, fd);				
 					
 					if (!chunks.containsKey(fCrc)){						
 						ChunkInfo ci = new ChunkInfo(fChunkNr);
@@ -280,8 +285,7 @@ public class Peer implements Constants{
 		}
 		if (chunks!=null){
 			RegisterChunkReq rcr = new RegisterChunkReq(chunks, peerData, files);
-			System.out.println("PEER: RegisterChunkReq PeedData: "+ peerData.getInetAddress()+" : "+peerData.getPort());
-			//RegisterChunkResp resp = chunkm.processRegisterChunkRequest(rcr);
+			System.out.println("PEER: RegisterChunkReq PeedData: "+ peerData.getInetAddress()+" : "+peerData.getPort());			
 			handler.sendMessage(rcr);
 		}
 	}
@@ -316,6 +320,7 @@ public class Peer implements Constants{
 		File[] fileList = folder.listFiles();
 		FileData fd = null;
 		
+		if (fileList!=null)
 		for (int i=0; i<fileList.length; i++){
 			if (fileList[i].isFile()){
 				fd =new FileData(fileList[i]); 
@@ -326,42 +331,36 @@ public class Peer implements Constants{
 		return fdl;
 	}
 	
-	public synchronized void sendFileRequest(){
+	/*public synchronized void sendFileRequest(){
 		File file = new File("C:/TreckerServer/life.pdf");
 		FileData fd = new FileData(file);
 		ChunkReq req = new ChunkReq(peerData);
 		req.setFd(fd);
 		req.setChunkNr(1);
 		handler.sendMessage(req);	
-	}
+	}*/
 	
-	public synchronized void sendChunkListRequest(FileData fd){
-		//File file = new File("C:/TreckerServer/life.pdf");
-		//FileData fd = new FileData(file);
+	// when the peer wants to download a file, it asks the server for a peer list
+	public synchronized void sendChunkListRequest(FileData fd){		
 		ChunkListReq req = new ChunkListReq(fd, peerData);
 		handler.sendMessage(req);
 	}
 	
+	// the peer downloads the selected file
 	public synchronized void downloadAFile(ChunkListResp chunkList){
 		chunkm.writeoutfileChunks();
-		PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
+		Test test = new Test();		
+		PeerClient pclient = new PeerClient(chunkm, handler, test.createChunkList(peerData), this.peerData);
+		//PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
 	}
 	
-	public synchronized DefaultTableModel buildTable(){
-		
-		// names of columns
-	    /*Vector<String> columnNames = new Vector<String>();
-	    columnNames.add("File");
-	    columnNames.add("%");*/
-	    
-	    // table content
-	    /*Vector<Vector<Object>> content = new Vector<Vector<Object>>(); 
-	    content.add(chunkm.getFiles(peerDir, peerChunkDir));*/
-	    
-	    //return new DefaultTableModel(content, columnNames);
+	// create peer table
+	public synchronized DefaultTableModel buildTable(){	
+		System.out.println("PEER: buildTable");
 		return chunkm.getFiles();
 	}
 	
+	// create server table
 	public synchronized void buildServerTable(GetFilesResp gfs){
 		System.out.println("PEER: buildServerTable");
 		peergui.buildServerTable( gfs.getDtm());
@@ -373,13 +372,14 @@ public class Peer implements Constants{
 		peergui.peerTableRows(rowData);
 	}
 	
+	// add a new row to server table
 	public synchronized void updateServerTable(ServerFilesUpdate sfu){
 		System.out.println("PEER: updateSeerverTable");
 		Vector<Object> rowData = sfu.getRow();
 		peergui.serverTableRows(rowData);
 	}
 
-	// copies the given file into peers folder
+	// copies the selected file into PeerClient folder
 	public void copyFile(File source, String fileName){
 		File dest = new File(peerDir+fileName);		
 		InputStream input = null;
@@ -414,7 +414,36 @@ public class Peer implements Constants{
 		}
 	}
 
-
+	// the peer has to download automatically the uncompleted files
+	public void completeFileDownloading(String folderName){
+		System.out.println("PEER: completeFileDownloading");
+		File folder = new File(folderName);
+		File[] fileList = folder.listFiles();
+		String [] desc = null;
+		
+		if (fileList!=null)
+		if (fileList.length!=0){			
+			for (int i=0; i<fileList.length; i++){
+				if (getFileExtention(fileList[i].getName()).equals("dsc")){
+					
+					desc = getDescData(fileList[i]); // filename, size, crc, nrofchunks
+					String fName = desc[0];
+					String fSize = desc[1];
+					String fCrc = desc[2];
+					int fChunkNr = Integer.parseInt(desc[3]);
+					
+					FileData fd = new FileData();
+					fd.setName(fName);
+					fd.setSize(Long.valueOf(fSize));
+					fd.setCrc(fCrc);
+					
+					sendChunkListRequest(fd);
+						
+				}
+			}
+		}
+	}
+	
 	/*public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
 		//Peer peer = new Peer(PEERSERVER_PORT);
 		//Peer peer = new Peer();

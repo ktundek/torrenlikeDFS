@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,6 +21,8 @@ import java.util.TreeSet;
 
 import Common.ChunkInfo;
 import Common.ChunkManager;
+import Common.ChunkPeerList;
+import Common.ChunkState;
 import Common.Constants;
 import Common.FileData;
 import Common.PeerList;
@@ -33,8 +36,7 @@ public class PeerClient extends Thread{
 	private ChunkManager chunkm = null;
 	private PeerHandler phandler = null;
 	private ChunkListResp chunkList = null;
-	private PeerData peer;
-	//private String host;
+	private PeerData peer;	
 	private InetAddress host;
 	private int port;
 
@@ -45,73 +47,116 @@ public class PeerClient extends Thread{
 		this.chunkList = chunkList;
 		this.peer = peer;
 		this.start();
-	}
-	/*public PeerClient(String host, int port) {
-		super();
-		this.host = host;
-		this.port = port;
-		this.start();
-	}*/
+	}	
 	
 	public void run(){			
-		FileData fd = chunkList.getFileData();
-		//Map<String, PeerList> list = chunkList.getChunkList();
-		Map<String, PeerList> chunks = orderChunkList(chunkList);
-		Iterator<Entry<String, PeerList>> it = chunks.entrySet().iterator();
-		int chunkNr = 0;
-		while (it.hasNext()) {			
+		FileData fd = chunkList.getFileData();		
+		//Map<String, PeerList> chunks = orderChunkList2(chunkList);
+		ArrayList<ChunkPeerList> chunks = orderChunkList2(chunkList);
+		//Map<String, PeerList> chunks = chunkList.getChunkList();
+		//Iterator<Entry<String, PeerList>> it = chunks.entrySet().iterator();
+		int chunkNr = -1;
+
+		boolean newFile = false;
+		ChunkInfo ci = chunkm.getFileChunkInfo(fd);
+		if (ci==null) newFile = true; // true = the peer doesn't have parts of the file
+		// false = the peer has parts of the file, we have to download only missing chunks
+
+		/*while (it.hasNext()) {			
 			Map.Entry pairs = (Map.Entry)it.next();
 			String key = (String) pairs.getKey();
-			PeerList peerList = (PeerList) pairs.getValue(); 
-			
-			ChunkReq req = new ChunkReq(peer);
-			req.setFd(fd);
-			req.setChunkNr(chunkNr);
-			System.out.println("The requested chunk is from: "+fd.getName()+", chunk no: "+chunkNr);
-			chunkNr++;
+			PeerList peerList = (PeerList) pairs.getValue();*/
+		for (int i=0; i<chunks.size();i++){
+			ChunkPeerList cplist = chunks.get(i);
+			String key = cplist.getChunkName();
+			PeerList peerList = cplist.getPeerList();
+			//chunkNr++;
+			chunkNr = getChunkNumber(key);
 
-			if (peerList.size()>0){
-				Random rnd = new Random();
-				int nr = rnd.nextInt(peerList.size());
-				PeerData pd = peerList.getItem(nr);
-				System.out.println("The random number is: "+nr+" so the selected seeder is: "+pd.getInetAddress()+", port: "+pd.getPort());			
+			if ((newFile) || (!newFile && isEmpty2(ci, chunkNr))){ // if the peer doesn't have the file or the chunk is missing
 
-				host = pd.getInetAddress();
-				port = pd.getPort();								
+				// create ChunkRequest
+				ChunkReq req = new ChunkReq(peer);
+				req.setFd(fd);
+				req.setChunkNr(chunkNr);
+				System.out.println("The requested chunk is : "+fd.getName()+", chunk no: "+chunkNr);
+				//chunkNr++;
+				boolean getNextPeer = true;
 
-				ObjectOutputStream outs = null; 
-				ObjectInputStream ins = null;
-				try {
-					Socket socket = new Socket(host, port);
-					outs = new ObjectOutputStream(socket.getOutputStream());
-					outs.flush();
-					ins = new ObjectInputStream(socket.getInputStream());
+				while(getNextPeer){ // while we cannot find an online peer
+					if (peerList.size()>0){
+						Random rnd = new Random();
+						int nr = rnd.nextInt(peerList.size());
+						PeerData pd = peerList.getItem(nr);
+						System.out.println("The random number is: "+nr+" so the selected seeder is: "+pd.getInetAddress()+", port: "+pd.getPort());			
 
-					outs.writeObject(req);		
-					Object resp = ins.readObject();
-					System.out.println(resp);
-					ChunkResp chunkResp = (ChunkResp)resp;
-					chunkm.onChunkRespPeer(chunkResp);
-					socket.close();			
-				} catch (IOException e) {				
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}				
-			}
-			else{// if none of the peers have the chunk, the peer will ask from the server
-				System.out.println("The peer will get the chunk from the server");
-				/*try {
-					host = InetAddress.getByName(Constants.TRACKER_HOST);
-				} catch (UnknownHostException e) {
-					System.out.println("----------------Hat ez nem jott be!!!");
-					e.printStackTrace();
+						host = pd.getInetAddress();
+						port = pd.getPort();								
+
+						ObjectOutputStream outs = null; 
+						ObjectInputStream ins = null;
+						try {
+							Socket socket = new Socket(host, port);
+							outs = new ObjectOutputStream(socket.getOutputStream());
+							outs.flush();
+							ins = new ObjectInputStream(socket.getInputStream());
+
+							outs.writeObject(req);		
+							Object resp = ins.readObject();
+							System.out.println(resp);
+							ChunkResp chunkResp = (ChunkResp)resp;
+							chunkm.onChunkRespPeer(chunkResp);
+							socket.close();	
+							getNextPeer = false;
+						} catch (IOException e) {
+							System.out.println("The selected peer was offline. We delete it and select an another one.");
+							peerList.removeItem(pd); // delete offline peer
+							e.printStackTrace();
+						} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}				
+					}
+					else{// if none of the peers have the chunk, the peer will ask from the server
+						System.out.println("The peer will get the chunk from the server");	
+						getNextPeer = false;
+						phandler.sendMessage(req);
+					}
 				}
-				port = Constants.TRACKER_PORT;*/
-				phandler.sendMessage(req);
 			}
 		}		
+	}
+
+	public synchronized ArrayList<ChunkPeerList> orderChunkList2(ChunkListResp resp){
+		Map<String, PeerList> chunks = resp.getChunkList(); // <chunkName, PeerList>		
+		ArrayList<ChunkPeerList> cplist = new ArrayList<ChunkPeerList>();
+		ArrayList<ChunkPeerList> new_cplist = new ArrayList<ChunkPeerList>();
+		int [] occurence = new int [chunks.size()];
+		int nr = 0;
+		
+		Iterator<Entry<String, PeerList>> it = chunks.entrySet().iterator();			
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			String key = (String) pairs.getKey();
+			PeerList pl = (PeerList) pairs.getValue();			
+			ChunkPeerList cpl = new ChunkPeerList(key, pl);
+			cplist.add(cpl);
+			occurence[nr] = pl.size();
+			++nr;
+		}
+				
+		if (occurence.length>0){
+			java.util.Arrays.sort(occurence);
+			for (int i=0; i<occurence.length; i++){
+				for (int j=0; j<cplist.size(); j++){
+					if (occurence[i]==cplist.get(j).getPeerList().size()){
+						ChunkPeerList list = new ChunkPeerList(cplist.get(j).getChunkName(), cplist.get(j).getPeerList());
+						new_cplist.add(list);						
+					}
+				}
+			}
+		}
+		return new_cplist;
 	}
 	
 	//
@@ -129,9 +174,9 @@ public class PeerClient extends Thread{
 			 PeerList pl = (PeerList) pairs.getValue();
 			 occurrence.put(key, pl.size());				
 		 }
-		 System.out.println("---Rendezes elott---");
-		 writeOutChunkList(chunks);
-		 System.out.println("---Rendezes elott vege---");
+		 //System.out.println("---Rendezes elott---");
+		 //writeOutChunkList(chunks);
+		 //System.out.println("---Rendezes elott vege---");
 		 
 		 
 		 //sorted_map.putAll(occurrence);
@@ -167,6 +212,33 @@ public class PeerClient extends Thread{
         sortedEntries.addAll(map.entrySet());        
         return sortedEntries;
     }
+	
+	public boolean isEmpty(ChunkInfo ci, String chunkName){		
+		boolean empty = true;
+		//System.out.println("PeerCLient: isEmpty: Chunkname: "+ chunkName);
+		//String[] part1 = chunkName.split("\\."); // chunk name ex.: asdf.txt1234afc50_1.chnk
+		//for (int k=0; k<part1.length;k++) System.out.println("part1["+k+"]: "+part1[k]);
+		//String[] part2 = part1[1].split("_"); // in part2 will be: part2[0]=txt1234afc50	part2[1]=1
+		//for (int k=0; k<part2.length;k++) System.out.println("part2["+k+"]: "+part2[k]);
+		//int chunkNr = Integer.parseInt(part2[1]);
+		int chunkNr = getChunkNumber(chunkName);
+		if (!ci.getState(chunkNr).equals(ChunkState.EMPTY)) {empty=false; System.out.println("chunkNr: "+ chunkNr+"chunkState: "+ci.getState(chunkNr).toString());}
+		else System.out.println("chunkNr: "+ chunkNr+" chunkState: "+ci.getState(chunkNr).toString());		
+		return empty;
+	}
+	
+	public int getChunkNumber(String chunkName){
+		String[] part1 = chunkName.split("\\."); // chunk name ex.: asdf.txt1234afc50_1.chnk
+		String[] part2 = part1[1].split("_"); // in part2 will be: part2[0]=txt1234afc50	part2[1]=1
+		return Integer.parseInt(part2[1]);
+	}
+	
+	public boolean isEmpty2(ChunkInfo ci, int chunkNr){		
+		boolean empty = true;		
+		if (!ci.getState(chunkNr).equals(ChunkState.EMPTY)) {empty=false; System.out.println("chunkNr: "+ chunkNr+"chunkState: "+ci.getState(chunkNr).toString());}
+		else System.out.println("chunkNr: "+ chunkNr+" chunkState: "+ci.getState(chunkNr).toString());		
+		return empty;
+	}
 	
 	public synchronized void writeOutChunkList(Map<String, PeerList> list){							
 		Iterator<Entry<String, PeerList>> it = list.entrySet().iterator();

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -27,9 +28,10 @@ public class PeerGUI{
 	private JButton button_down, button_up;
 	private JFileChooser chooser;
 	
-	public PeerGUI(Peer peer){
-		this.peer = peer;
-		//createDialog();
+	public PeerGUI(){
+	//public PeerGUI(Peer peer){
+		//this.peer = peer;
+		createDialog();
 	}
 	
 	public void createDialog(){
@@ -51,11 +53,26 @@ public class PeerGUI{
 		// upper part
 		label_p.setText("My files:");
 		panel_up.add(label_p, BorderLayout.NORTH);
-		table_p = new JTable((TableModel) peer.buildTable());
+		
+		/*table_p = new JTable((TableModel) peer.buildTable());
 		table_p.setSize(190, 100);
 		JScrollPane sp = new JScrollPane(table_p);
 		sp.setPreferredSize(new Dimension(300, 200));
 		panel_up.add(sp, BorderLayout.CENTER);
+		*/
+		DefaultTableModel dtm = new DefaultTableModel(); 		
+		Vector<String> columnNames = new Vector<String>();
+		columnNames.add("File");
+		columnNames.add("Size in bytes");
+		columnNames.add("%");				
+		dtm.setColumnIdentifiers(columnNames);		
+				
+		table_p = new JTable(dtm);
+		table_p.setSize(190, 100);
+		JScrollPane sp = new JScrollPane(table_p);
+		sp.setPreferredSize(new Dimension(300, 200));
+		panel_up.add(sp, BorderLayout.CENTER);
+				
 		button_up = new JButton("Upload new file");
 		button_up.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -73,7 +90,18 @@ public class PeerGUI{
 		
 		// lower part
 		label_s.setText("Available files on server:");
-		panel_down.add(label_s, BorderLayout.NORTH);		
+		panel_down.add(label_s, BorderLayout.NORTH);
+		
+		DefaultTableModel dtm_s = new DefaultTableModel(); 		
+		Vector<String> columnNames_s = new Vector<String>();
+		columnNames_s.add("File");
+		columnNames_s.add("Size in bytes");
+		columnNames_s.add("Crc");				
+		dtm_s.setColumnIdentifiers(columnNames_s);
+		
+		table_s = new JTable(dtm_s);
+		panel_down.add(new JScrollPane(table_s), BorderLayout.CENTER);
+		
 		button_down = new JButton("Download");
 		button_down.setSize(new Dimension(50, 5));		
 		button_down.addActionListener(new ActionListener() {
@@ -105,13 +133,33 @@ public class PeerGUI{
 		frame.setLocation(50,100);
 	}
 		
+	public void setPeer(Peer peer){
+		this.peer = peer;
+	}
 	
+	public void builPeerTable(){		
+		DefaultTableModel dtm = peer.buildTable();		
+		Vector<Vector<Object>> data = dtm.getDataVector();
+		Iterator it = data.iterator();
+		while(it.hasNext()){
+			Vector<Object> row = (Vector<Object>) it.next();
+			//System.out.println(" col[0]: "+row.get(0)+" col[1]: "+row.get(1)+" col[2]: "+row.get(2));
+			peerTableRows(row);
+		}		
+	}
+
 	public void buildServerTable(DefaultTableModel dtm){
-		createDialog();		
-		table_s = new JTable(dtm);
-		panel_down.add(new JScrollPane(table_s), BorderLayout.CENTER);
-		
-		//table_s.repaint();		
+		//createDialog();		
+		//table_s = new JTable(dtm);
+		//panel_down.add(new JScrollPane(table_s), BorderLayout.CENTER);
+		//DefaultTableModel dtm = peer.buildTable();		
+		Vector<Vector<Object>> data = dtm.getDataVector();
+		Iterator it = data.iterator();
+		while(it.hasNext()){
+			Vector<Object> row = (Vector<Object>) it.next();
+			//System.out.println(" col[0]: "+row.get(0)+" col[1]: "+row.get(1)+" col[2]: "+row.get(2));
+			serverTableRows(row);
+		}
 	}
 	
 	// insert a new row or update an existing one
@@ -142,9 +190,12 @@ public class PeerGUI{
 	
 	
 	public static void main(String argv[]){
-		Peer peer = new Peer();
-		PeerGUI gui = new PeerGUI(peer);
-		peer.setGUI(gui);
+		PeerGUI gui = new PeerGUI();
+		Peer peer = new Peer(gui);
+		gui.setPeer(peer);
+		gui.builPeerTable();
+		//PeerGUI gui = new PeerGUI(peer);
+		//peer.setGUI(gui);
 		//gui.createDialog();
 	}
 
