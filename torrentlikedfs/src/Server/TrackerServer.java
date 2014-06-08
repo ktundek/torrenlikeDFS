@@ -141,7 +141,10 @@ public class TrackerServer implements Constants{
 			ti.notifyPeer(sfu);
 		}
 	}
-			
+		
+	public synchronized void deleteTrackerItem(TrackerItem ti){
+		trackers.remove(ti);
+	}
 	
 	public static void main(String args[]){
 		FileDataListClient fdl = null;
@@ -184,7 +187,7 @@ public class TrackerServer implements Constants{
 				serverItemNr++;
 				System.out.println("New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tsc, System.currentTimeMillis(), socket.getPort(), serverItemNr);
-				TrackerItem ti = new TrackerItem(socket, tsc, observer, chunkm, serverItemNr);
+				TrackerItem ti = new TrackerItem(socket, tsc, ts, observer, chunkm, serverItemNr);
 				ts.trackers.add(ti);
 			} 
 			catch (IOException e) {

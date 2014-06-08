@@ -349,9 +349,9 @@ public class Peer implements Constants{
 	// the peer downloads the selected file
 	public synchronized void downloadAFile(ChunkListResp chunkList){
 		chunkm.writeoutfileChunks();
-		Test test = new Test();		
-		PeerClient pclient = new PeerClient(chunkm, handler, test.createChunkList(peerData), this.peerData);
-		//PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
+		//Test test = new Test();		
+		//PeerClient pclient = new PeerClient(chunkm, handler, test.createChunkList(peerData), this.peerData);
+		PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
 	}
 	
 	// create peer table

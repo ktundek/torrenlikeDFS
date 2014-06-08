@@ -37,6 +37,7 @@ import Messages.UnRegisterPeerReq;
 public class TrackerItem extends Thread{
 	private Socket socket;
 	private TrackerServerCore serverCore;
+	private TrackerServer trackerserver;
 	private ClientObserver observer;
 	private ChunkManager chunkm;
 	private PeerData peerData;
@@ -45,7 +46,8 @@ public class TrackerItem extends Thread{
 	private boolean isRunning = true;
 	private int nr; 
 
-	public TrackerItem(Socket socket, TrackerServerCore serverCore, ClientObserver observer, ChunkManager chunkm, int nr) {
+	public TrackerItem(Socket socket, TrackerServerCore serverCore, TrackerServer trackerserver,
+			ClientObserver observer, ChunkManager chunkm, int nr) {
 		super();
 		this.socket = socket;
 		try {
@@ -56,6 +58,7 @@ public class TrackerItem extends Thread{
 			//e.printStackTrace();
 		}		
 		this.serverCore = serverCore;
+		this.trackerserver = trackerserver;
 		this.observer = observer;
 		this.chunkm = chunkm;
 		this.nr = nr;
@@ -94,7 +97,7 @@ public class TrackerItem extends Thread{
 			
 		} catch (IOException e) {			
 			e.printStackTrace();			
-			dieThreads();
+			dieAllThreads();
 		} catch (ClassNotFoundException e) {			
 			e.printStackTrace();
 		}
@@ -187,7 +190,11 @@ public class TrackerItem extends Thread{
 		sendMessage(sfu);
 	}
 	
-	public void dieThreads(){		
+	public void dieThread(){
+		this.dieThread();
+	}
+	
+	public void dieAllThreads(){		
 		//System.out.println("DIE Nr of Peers: "+serverCore.getNrRegisteredPeer());
 		PeerItem peerItem = new PeerItem(this.peerData, this.socket.getPort());
 		serverCore.unregisterPeer(peerItem);
@@ -196,6 +203,9 @@ public class TrackerItem extends Thread{
 		//chunkm.writeOutChunkOwner();
 		System.out.println("TRCK "+nr+": The client has signed out");
 		observer.setIsRunning(false);
+		observer.dieThread();
+		trackerserver.deleteTrackerItem(this);
 		isRunning = false;
+		this.dieThread();
 	}
 }

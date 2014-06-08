@@ -397,33 +397,26 @@ public class ChunkManager {
 
 	public synchronized String[] getDescData(String fileName){		
 		String[] res = new String[4];
-		BufferedReader reader=null;
-		//FileInputStream reader = null;
+		BufferedReader reader=null;		
 		FileReader fr = null;
 
 		try {
 			fr = new FileReader(dirw+fileName);
-			reader = new BufferedReader(fr);
-			//reader = new FileInputStream(dirw+fileName);
+			reader = new BufferedReader(fr);			
 			String line = null;
 			int ind = 0;
 			while ((line = reader.readLine()) != null) {			
-				res[ind] = line;
-				//System.out.println("DESC data: "+ind+" "+res[ind]);
+				res[ind] = line;				
 				ind++;
 			}				
 		} catch (IOException x) {
 			System.err.println(x);
 		}
-		finally{
-			/*if (reader!=null)				
-				//reader.close();
-				IOUtils.closeQuietly(reader);*/			
+		finally{				
 			try {
 				reader.close();
 				fr.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+			} catch (IOException e) {				
 				e.printStackTrace();
 			}
 		}
@@ -529,7 +522,7 @@ public class ChunkManager {
 			if (mergeChunks(fd)){
 				if (tsc!=null) tsc.addFile(fd);
 				//we should delete the chunks
-				//deleteChunks(fd);
+				deleteChunks(fd);
 			}
 			else{}
 			// TODO
@@ -662,7 +655,7 @@ public class ChunkManager {
 			if (getFileExtention(fileList2[i].getName()).equals("dsc")){
 				row = new Vector<Object>();
 
-				desc = getDescData(fileList2[i]); // filename, size, crc, nrofchunks
+				desc = getDescData(fileList2[i].getName()); // filename, size, crc, nrofchunks
 				String fName = desc[0];
 				String fSize = desc[1];
 				String fCrc = desc[2];
@@ -718,11 +711,12 @@ public class ChunkManager {
 		}
 	}
 
-	public String[] getDescData(File file){		
+	/*public String[] getDescData(File file){		
 		String[] res = new String[4]; 
+		BufferedReader reader = null;
 
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(file)); 
+			reader = new BufferedReader(new FileReader(file)); 
 			String line = null;
 			int ind = 0;
 			while ((line = reader.readLine()) != null) {
@@ -733,9 +727,17 @@ public class ChunkManager {
 		} catch (IOException x) {
 			System.err.println(x);
 		}
+		finally{
+			try {
+				reader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
 		return res;
-	}
+	}*/
 
 	public int getDownloadPercentage(FileData fileData)
 	{
@@ -808,7 +810,7 @@ public class ChunkManager {
 				if (mergeChunks(fd)){
 					tsc.addFile(fd);
 					// we should delete the chunks
-					//deleteChunks(fd);
+					deleteChunks(fd);
 					System.out.println("Itt kellene ertesiteni az osszes peert, hogy a szerveren uj fajl van!!!!!!!!");
 					trackerserver.notifyTrackerItems(getFileDataForTableRow(fd));
 				}

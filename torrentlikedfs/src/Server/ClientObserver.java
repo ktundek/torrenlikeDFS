@@ -47,4 +47,7 @@ public class ClientObserver extends Thread implements Constants{
 		}
 	}
 
+	public void dieThread(){
+		this.dieThread();
+	}
 }
