@@ -2,6 +2,7 @@ package Client;
 
 import java.io.Serializable;
 import java.net.*;
+import java.util.Enumeration;
 
 
 public class PeerData implements Serializable{	
@@ -11,9 +12,39 @@ public class PeerData implements Serializable{
 
 	public PeerData(int port, InetAddress inetAddress) {
 		super();
-		this.port = port;
-		this.inetAddress = inetAddress;
+		String os = System.getProperty("os.name").toLowerCase();
+		if (os.contains("windows")){
+			this.port = port;
+			this.inetAddress = inetAddress;
+		}
+		if (os.contains("linux")){
+			Enumeration en= null;
+			int nr = 0;
+			try {
+				en = NetworkInterface.getNetworkInterfaces();
+			} catch (SocketException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}while(en.hasMoreElements()){
+			    NetworkInterface ni=(NetworkInterface) en.nextElement();
+			    Enumeration ee = ni.getInetAddresses();
+			    while(ee.hasMoreElements()) {
+			    	nr++;
+			        InetAddress ia= (InetAddress) ee.nextElement();
+			        if (nr==2){
+			        	System.out.println(ia.getHostAddress());		        	
+			        	try {
+			    			this.inetAddress = InetAddress.getByName(ia.getHostAddress());
+			    		} catch (UnknownHostException e) {
+			    			// TODO Auto-generated catch block
+			    		}
+			    			
+			        }
+			    }
+			}
+		}
 	}
+		
 
 	public int getPort() {
 		return port;

@@ -7,6 +7,8 @@ import java.util.Vector;
 import Client.PeerData;
 import Client.PeerItem;
 
+
+
 public class PeerItemList{
 	//private Vector<PeerItem> peerItemList;
 	private ArrayList<PeerItem> peerItemList;

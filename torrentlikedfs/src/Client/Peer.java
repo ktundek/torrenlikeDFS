@@ -24,6 +24,7 @@ import Common.FileData;
 import Common.FileDataListClient;
 import Common.Group;
 import Common.Test;
+import Exceptions.ExceptionMessage;
 import Exceptions.UnexpectedMessageException;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
@@ -46,7 +47,7 @@ public class Peer implements Constants{
 	private NotifyTracker notify = null;
 	private PeerHandler handler = null;
 	private PeerServer peerServer = null;
-	private ChunkManager chunkm = null;
+	private ChunkManager chunkm = null;	
 	private Socket seederSocket = null;
 	private PeerGUI peergui = null;
 	private static String peerDir = "";
@@ -86,9 +87,11 @@ public class Peer implements Constants{
 			peerDir = "C:/PeerClient/";
 			peerChunkDir = "C:/PeerClientChunk/";
 		}
-		if (os.contains("ubuntu")){
-			peerDir = "/PeerClient/";
-			peerChunkDir = "/PeerClientChunk/";
+		if (os.contains("linux")){
+			//peerDir = "/PeerClient/";
+			//peerChunkDir = "/PeerClientChunk/";
+			peerDir = System.getProperty("user.home")+File.separator+"PeerClient"+File.separator;
+			peerChunkDir = System.getProperty("user.home")+File.separator+"PeerClientChunk"+File.separator;
 		}
 	}
 	
@@ -124,6 +127,7 @@ public class Peer implements Constants{
 			
 		} catch (IOException e) {				
 			System.out.println("Input EXCEPTION!!! - Check the ip address!");
+			ExceptionMessage.messageBox("Cannot connect to the server!");
 			notify.interrupt();
 			//e.printStackTrace();
 		} catch (ClassNotFoundException e) {			

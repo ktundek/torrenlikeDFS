@@ -5,6 +5,8 @@ import java.util.Vector;
 
 import Client.PeerData;
 
+
+
 public class PeerList implements Serializable{
 	private Vector<PeerData> peerList;
 

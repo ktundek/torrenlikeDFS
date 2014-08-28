@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import Client.PeerData;
 
+
+
 public class Group implements Serializable{
 	private PeerData peerdata;
 	private FileDataListClient fileList;

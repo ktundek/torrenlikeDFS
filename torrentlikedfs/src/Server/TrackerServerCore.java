@@ -1,12 +1,12 @@
 package Server;
 
+import Client.PeerData;
+import Client.PeerItem;
 import Common.FileData;
 import Common.FileDataListClient;
 import Common.FileDataListServer;
 import Common.Group;
 import Common.GroupList;
-import Client.PeerData;
-import Client.PeerItem;
 import Messages.RegisterGroupReq;
 import Messages.RegisterGroupResp;
 import Messages.RegisterPeerReq;

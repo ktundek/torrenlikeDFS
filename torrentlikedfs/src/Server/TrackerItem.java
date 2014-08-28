@@ -8,6 +8,7 @@ import java.net.SocketException;
 
 import javax.swing.table.DefaultTableModel;
 
+
 import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
@@ -203,9 +204,9 @@ public class TrackerItem extends Thread{
 		//chunkm.writeOutChunkOwner();
 		System.out.println("TRCK "+nr+": The client has signed out");
 		observer.setIsRunning(false);
-		observer.dieThread();
+		//observer.dieThread();
 		trackerserver.deleteTrackerItem(this);
 		isRunning = false;
-		this.dieThread();
+		//this.dieThread();
 	}
 }

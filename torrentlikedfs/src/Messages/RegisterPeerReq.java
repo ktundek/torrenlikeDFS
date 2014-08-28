@@ -5,6 +5,8 @@ import java.io.Serializable;
 import Client.PeerData;
 import Client.PeerItem;
 
+
+
 public class RegisterPeerReq implements Serializable {
 	private PeerData peerData;
 

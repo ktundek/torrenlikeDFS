@@ -18,8 +18,10 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+
 import Client.PeerData;
 import Client.PeerHandler;
+import Exceptions.ExceptionMessage;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
@@ -524,7 +526,7 @@ public class ChunkManager {
 				//we should delete the chunks
 				deleteChunks(fd);
 			}
-			else{}
+			else{ExceptionMessage.messageBox("Error merging the "+fd.getName()+" chunk(s)!");}
 			// TODO
 			//ertesiteni kell a klienst, hogy hiba tortent a file osszerakasaban			
 		}		
@@ -969,7 +971,7 @@ public class ChunkManager {
 	
 	// here we create a list of peers who have chunks of a given file
 	public synchronized ChunkListResp onChunkListRequest(ChunkListReq req){
-		// megnezni, h a chunkkok mely klienseknel van es osszeallitani egy listat
+		// megnezni, h a chunkkok mely klienseknel van es osszeallit egy peer listat
 		// ha nincs egy kliensnel sem, akkor a szervertol kell kerni
 		PeerData peer = req.getPeer();
 		FileData fd = req.getFileData();

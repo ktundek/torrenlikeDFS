@@ -2,6 +2,7 @@ package Server;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+
 import Client.PeerData;
 import Common.Constants;
 
@@ -47,7 +48,7 @@ public class ClientObserver extends Thread implements Constants{
 		}
 	}
 
-	public void dieThread(){
+	/*public void dieThread(){
 		this.dieThread();
-	}
+	}*/
 }

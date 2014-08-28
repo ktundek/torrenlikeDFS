@@ -130,6 +130,7 @@ public class PeerClient extends Thread{
 		ArrayList<ChunkPeerList> new_cplist = new ArrayList<ChunkPeerList>();
 		int [] occurence = new int [chunks.size()];
 		int nr = 0;
+		int nr2 = 0;
 		
 		Iterator<Entry<String, PeerList>> it = chunks.entrySet().iterator();			
 		while (it.hasNext()) {
@@ -146,9 +147,18 @@ public class PeerClient extends Thread{
 			java.util.Arrays.sort(occurence);
 			for (int i=0; i<occurence.length; i++){
 				for (int j=0; j<cplist.size(); j++){
+					nr2 = 0;
 					if (occurence[i]==cplist.get(j).getPeerList().size()){
 						ChunkPeerList list = new ChunkPeerList(cplist.get(j).getChunkName(), cplist.get(j).getPeerList());
-						new_cplist.add(list);						
+						
+						for (int k=0; k<new_cplist.size(); k++){
+							if (new_cplist.get(k).getChunkName().equals(list.getChunkName())){
+								System.out.println("---ADD--");
+								nr2++;					
+							}
+						}
+						
+						if (nr2==0){new_cplist.add(list);}						
 					}
 				}
 			}

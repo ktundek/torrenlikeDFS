@@ -5,6 +5,8 @@ import java.util.Vector;
 import Client.PeerData;
 import Client.PeerItem;
 
+
+
 public class GroupList {
 	private Vector<Group> groupList;
 

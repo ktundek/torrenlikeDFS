@@ -6,6 +6,8 @@ import javax.swing.table.DefaultTableModel;
 
 import Client.PeerData;
 
+
+
 public class GetFilesResp extends ChunkMessage implements Serializable{
 	private DefaultTableModel dtm = null;
 	
