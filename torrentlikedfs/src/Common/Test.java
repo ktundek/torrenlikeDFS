@@ -30,8 +30,7 @@ public class Test {
 	public ChunkListResp createChunkList(PeerData peerData){
 		FileData fileData = createFileData();
 		Map<String, PeerList> chunkList = createChunkMap();
-		ChunkListResp list = new ChunkListResp(peerData, chunkList, fileData);
-		//chunkListresp = list;
+		ChunkListResp list = new ChunkListResp(peerData, chunkList, fileData);		
 		return list;
 	}
 	

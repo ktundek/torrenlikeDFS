@@ -26,6 +26,7 @@ import Common.Group;
 import Common.Test;
 import Exceptions.ExceptionMessage;
 import Exceptions.UnexpectedMessageException;
+import Logger.Logging;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
@@ -68,9 +69,6 @@ public class Peer implements Constants{
 			registerFile(peerDir);
 			registerChunks(peerChunkDir);
 			completeFileDownloading(peerChunkDir);
-			//sendChunkListRequest();
-			//peer.sendFileRequest();
-			//peer.connectoToSeeder(TRACKER_HOST, 8119);
 			
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
@@ -87,9 +85,7 @@ public class Peer implements Constants{
 			peerDir = "C:/PeerClient/";
 			peerChunkDir = "C:/PeerClientChunk/";
 		}
-		if (os.contains("linux")){
-			//peerDir = "/PeerClient/";
-			//peerChunkDir = "/PeerClientChunk/";
+		if (os.contains("linux")){			
 			peerDir = System.getProperty("user.home")+File.separator+"PeerClient"+File.separator;
 			peerChunkDir = System.getProperty("user.home")+File.separator+"PeerClientChunk"+File.separator;
 		}
@@ -108,68 +104,39 @@ public class Peer implements Constants{
 			
 			System.out.println("Server's response: "+resp.toString());
 
-			if (resp instanceof RegisterPeerResp){
+			if (resp instanceof RegisterPeerResp){  // the client was succesfully registered
 				RegisterPeerResp rpresp = (RegisterPeerResp) resp;						
-				System.out.println("Registered client!");				
+				//System.out.println("Registered client!");
+				Logging.write(this.getClass().getName(), "connecToServer", "Registered client!: "+peerData.getInetAddress());
 				notify = new NotifyTracker(in, out, socket);
 				notify.start();
 				//peerServer = new PeerServer(((RegisterPeerResp) resp).getPort(), this);
 				handler = new PeerHandler(socket, this, notify, in, out, chunkm);
 				chunkm.setPeerHandler(handler);
 				registerPeerFiles(peerDir);
-				registerPeersChunks(peerChunkDir);
-				System.out.println("AFTER REGISTRATION a PEER HAS: ");
-				chunkm.writeoutfileChunks();
-				handler.sendMessage(new GetFilesReq(this.peerData));
-				//chunkm = new ChunkManager(peerDir, peerData, handler);
+				registerPeersChunks(peerChunkDir);		
+				//chunkm.writeoutfileChunks();
+				handler.sendMessage(new GetFilesReq(this.peerData));				
 			}
 			else{throw new UnexpectedMessageException("RegisterPeerResp");}
 			
-		} catch (IOException e) {				
-			System.out.println("Input EXCEPTION!!! - Check the ip address!");
-			ExceptionMessage.messageBox("Cannot connect to the server!");
-			notify.interrupt();
-			//e.printStackTrace();
+		} catch (IOException e) {							
+			ExceptionMessage.messageBox("Cannot connect to the server! Check the IP!");
+			notify.interrupt();			
 		} catch (ClassNotFoundException e) {			
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(), "connectToServer", e.getMessage());
 		} catch (UnexpectedMessageException e) {			
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(), "connectToServer", e.getMessage());
 		}							
-	}		
+	}			
 	
-	public void connectoToSeeder(String host, int port){
-		/*ObjectOutputStream outs = null;
-		ObjectInputStream ins = null;
-		try {
-			seederSocket = new Socket(host, port);
-			outs = new ObjectOutputStream(seederSocket.getOutputStream());
-			outs.flush();
-			ins = new ObjectInputStream(seederSocket.getInputStream());
-			
-			ChunkReq req = new ChunkReq();
-			outs.writeObject(req);		
-			Object resp = ins.readObject();
-			System.out.println(resp);		
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-	}
-	
-	public void disconnectFromServer() throws IOException{
-		//UnRegisterPeerReq unregreq = new UnRegisterPeerReq(peerItem);
-		//out.writeObject(unregreq);
-	}
-	
+	// szamba veszi, h milyen fajlokkal rendelkezik
 	public synchronized void registerPeerFiles(String folderName){
 		FileDataListClient fdl = getFileList(folderName);
 		chunkm.initializePeerFileList(fdl);
 	}
 	
+	// szamba veszi, hogy milyen fajldarabokkal rendelkezik
 	public void registerPeersChunks(String folderName){
 		Hashtable<String, ChunkInfo> chunks = null;		
 		File folder = new File(folderName);
@@ -192,7 +159,6 @@ public class Peer implements Constants{
 					fd.setName(fName);
 					fd.setSize(Long.valueOf(fSize));
 					fd.setCrc(fCrc);				
-					//System.out.println("DESC PARAMETERS:"+fName+", "+fSize+", "+fCrc+", "+fChunkNr);
 					
 					if (!chunks.containsKey(fCrc)){						
 						ChunkInfo ci = new ChunkInfo(fChunkNr);
@@ -288,8 +254,7 @@ public class Peer implements Constants{
 			
 		}
 		if (chunks!=null){
-			RegisterChunkReq rcr = new RegisterChunkReq(chunks, peerData, files);
-			System.out.println("PEER: RegisterChunkReq PeedData: "+ peerData.getInetAddress()+" : "+peerData.getPort());			
+			RegisterChunkReq rcr = new RegisterChunkReq(chunks, peerData, files);					
 			handler.sendMessage(rcr);
 		}
 	}
@@ -307,8 +272,7 @@ public class Peer implements Constants{
 			    String line = null;
 			    int ind = 0;
 			    while ((line = reader.readLine()) != null) {
-			        res[ind] = line;
-			        //System.out.println("DESC data: "+ind+" "+res[ind]);
+			        res[ind] = line;			        
 			        ind++;
 			    }			    
 			} catch (IOException x) {
@@ -330,19 +294,9 @@ public class Peer implements Constants{
 				fd =new FileData(fileList[i]); 
 				fdl.addItem(fd);
 			}
-		}
-		//fdl.toStringFileDataList();
+		}		
 		return fdl;
-	}
-	
-	/*public synchronized void sendFileRequest(){
-		File file = new File("C:/TreckerServer/life.pdf");
-		FileData fd = new FileData(file);
-		ChunkReq req = new ChunkReq(peerData);
-		req.setFd(fd);
-		req.setChunkNr(1);
-		handler.sendMessage(req);	
-	}*/
+	}	
 	
 	// when the peer wants to download a file, it asks the server for a peer list
 	public synchronized void sendChunkListRequest(FileData fd){		
@@ -352,33 +306,29 @@ public class Peer implements Constants{
 	
 	// the peer downloads the selected file
 	public synchronized void downloadAFile(ChunkListResp chunkList){
-		chunkm.writeoutfileChunks();
+		//chunkm.writeoutfileChunks();
 		//Test test = new Test();		
 		//PeerClient pclient = new PeerClient(chunkm, handler, test.createChunkList(peerData), this.peerData);
 		PeerClient pclient = new PeerClient(chunkm, handler, chunkList, this.peerData);
 	}
 	
 	// create peer table
-	public synchronized DefaultTableModel buildTable(){	
-		System.out.println("PEER: buildTable");
+	public synchronized DefaultTableModel buildTable(){		
 		return chunkm.getFiles();
 	}
 	
 	// create server table
 	public synchronized void buildServerTable(GetFilesResp gfs){
-		System.out.println("PEER: buildServerTable");
 		peergui.buildServerTable( gfs.getDtm());
 	}
 	
 	// update row or insert a new row
-	public synchronized void updatePeerTable(Vector<Object> rowData){
-		System.out.println("PEER: updatePeerTable");
+	public synchronized void updatePeerTable(Vector<Object> rowData){		
 		peergui.peerTableRows(rowData);
 	}
 	
 	// add a new row to server table
 	public synchronized void updateServerTable(ServerFilesUpdate sfu){
-		System.out.println("PEER: updateSeerverTable");
 		Vector<Object> rowData = sfu.getRow();
 		peergui.serverTableRows(rowData);
 	}
@@ -400,27 +350,23 @@ public class Peer implements Constants{
 			FileData fd = new FileData(dest);
 			chunkm.addNewFile(fd);
 			chunkm.sendNewFileChunks(fd);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (FileNotFoundException e) {		
+			Logging.write(this.getClass().getName(), "copyFile", e.getMessage());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(), "copyFile", e.getMessage());			
 		}			
 		finally {
 			try {
 				input.close();
 				output.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Logging.write(this.getClass().getName(), "copyFile", e.getMessage());				
 			}			
 		}
 	}
 
 	// the peer has to download automatically the uncompleted files
-	public void completeFileDownloading(String folderName){
-		System.out.println("PEER: completeFileDownloading");
+	public void completeFileDownloading(String folderName){		
 		File folder = new File(folderName);
 		File[] fileList = folder.listFiles();
 		String [] desc = null;
@@ -447,17 +393,5 @@ public class Peer implements Constants{
 			}
 		}
 	}
-	
-	/*public static void main(String args[]) throws UnexpectedMessageException, InterruptedException, ClassNotFoundException, IOException{
-		//Peer peer = new Peer(PEERSERVER_PORT);
-		//Peer peer = new Peer();
-		//System.out.println("BEFORE_CALL");
-		peer.connectToServer(TRACKER_HOST, TRACKER_PORT);
-		peer.registerFile(peerDir);
-		peer.registerChunks(peerChunkDir);
-		peer.sendChunkListRequest();
-		//peer.sendFileRequest();
-		//peer.connectoToSeeder(TRACKER_HOST, 8119);
-		//System.out.println("AFTER_CALL");			
-	}*/
+		
 }

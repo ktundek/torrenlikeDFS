@@ -10,17 +10,15 @@ import Common.ChunkInfo;
 import Common.FileData;
 
 public class RegisterChunkReq implements Serializable{
-	//private Map<String, ChunkInfo> chunks;
+	private static final long serialVersionUID = 1L;
 	private Hashtable<String, ChunkInfo> chunks;
 	private Hashtable<String, FileData> files;
 	private PeerData peer;
 
-	public RegisterChunkReq(Hashtable<String, ChunkInfo> chunks, PeerData peer, Hashtable<String, FileData> files) {
-		//super(peer);
+	public RegisterChunkReq(Hashtable<String, ChunkInfo> chunks, PeerData peer, Hashtable<String, FileData> files) {		
 		this.peer = peer;
 		this.files = files;
-		this.chunks = chunks;
-		//this.fd =fd;  
+		this.chunks = chunks; 
 	}
 
 	public Map<String, ChunkInfo> getChunks() {

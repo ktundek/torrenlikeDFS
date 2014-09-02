@@ -9,11 +9,6 @@ public class ChunkList implements Serializable{
 	public ChunkList() {
 		super();
 		chunkList = new Hashtable<String, ChunkData>();
-	}
-	
-	public void addItem(ChunkData cd){
-		//chunkList.p
-	}
-	
+	}			
 	
 }

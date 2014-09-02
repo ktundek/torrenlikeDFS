@@ -8,6 +8,7 @@ import Client.PeerData;
 import Common.ChunkInfo;
 
 public class RegisterChunkResp extends ChunkMessage implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private Map<String, ChunkInfo> chunks;	
 	
 	public RegisterChunkResp(Map<String, ChunkInfo> chunks, PeerData peer) {

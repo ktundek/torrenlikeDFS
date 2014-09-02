@@ -6,7 +6,11 @@ import java.io.Serializable;
 import Client.PeerData;
 import Common.FileData;
 
-public class ChunkResp extends ChunkMessage implements Serializable{
+//Ez az osztaly a https://code.google.com/p/simpletorrentlikep2p/ cimen talalhato 
+//ChunkResp osztaly alapjan keszult
+
+public class ChunkResp extends ChunkMessage implements Serializable{	
+	private static final long serialVersionUID = 1L;
 	private FileData fd;
 	private int chunkNr;
 	private byte[] data;

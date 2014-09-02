@@ -8,11 +8,11 @@ import Client.PeerData;
 
 
 public class ServerFilesUpdate extends ChunkMessage implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private Vector<Object> row = null;
 	
 	public ServerFilesUpdate(PeerData peer) {
-		super(peer);
-		// TODO Auto-generated constructor stub
+		super(peer);	
 	}
 
 	public Vector<Object> getRow() {

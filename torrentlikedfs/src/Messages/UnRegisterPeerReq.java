@@ -7,6 +7,7 @@ import Client.PeerItem;
 
 
 public class UnRegisterPeerReq implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private PeerItem peerItem;
 
 	public UnRegisterPeerReq(PeerItem peerItem) {

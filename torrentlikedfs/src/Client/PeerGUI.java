@@ -18,6 +18,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 import Common.FileData;
+import Exceptions.ExceptionMessage;
 
 public class PeerGUI{
 	private Peer peer;
@@ -28,9 +29,7 @@ public class PeerGUI{
 	private JButton button_down, button_up;
 	private JFileChooser chooser;
 	
-	public PeerGUI(){
-	//public PeerGUI(Peer peer){
-		//this.peer = peer;
+	public PeerGUI(){	
 		createDialog();
 	}
 	
@@ -53,13 +52,7 @@ public class PeerGUI{
 		// upper part
 		label_p.setText("My files:");
 		panel_up.add(label_p, BorderLayout.NORTH);
-		
-		/*table_p = new JTable((TableModel) peer.buildTable());
-		table_p.setSize(190, 100);
-		JScrollPane sp = new JScrollPane(table_p);
-		sp.setPreferredSize(new Dimension(300, 200));
-		panel_up.add(sp, BorderLayout.CENTER);
-		*/
+				
 		DefaultTableModel dtm = new DefaultTableModel(); 		
 		Vector<String> columnNames = new Vector<String>();
 		columnNames.add("File");
@@ -79,8 +72,7 @@ public class PeerGUI{
 				chooser = new JFileChooser();
 				chooser.setDialogTitle("Choose a file");
 				int returnVal = chooser.showOpenDialog(frame);
-				if (returnVal == JFileChooser.APPROVE_OPTION){
-					System.out.println("You chose to open this file: " +chooser.getSelectedFile().getName());
+				if (returnVal == JFileChooser.APPROVE_OPTION){					
 					 peer.copyFile(chooser.getSelectedFile(), chooser.getSelectedFile().getName());
 				}
 			}
@@ -107,8 +99,7 @@ public class PeerGUI{
 		button_down.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!(table_s.getSelectedRows().length==0)){
-					int selectedRowIndex = table_s.getSelectedRow();
-					//int selectedColumnIndex = table_s.getSelectedColumn();
+					int selectedRowIndex = table_s.getSelectedRow();					
 					String fName = table_s.getModel().getValueAt(selectedRowIndex, 0).toString();
 					long fSize = Long.parseLong(table_s.getModel().getValueAt(selectedRowIndex, 1).toString());
 					String fCrc = table_s.getModel().getValueAt(selectedRowIndex, 2).toString();
@@ -119,9 +110,8 @@ public class PeerGUI{
 					fd.setCrc(fCrc);
 					peer.sendChunkListRequest(fd);
 				}
-				else {
-					// TODO
-					// ertesiteni kell a peert, h valasszon ki egy sort
+				else { // notify the client that he/she has to select a file
+					ExceptionMessage.infoBox("Select a file!");					
 				}
 			}});
 		panel_down.add(button_down, BorderLayout.SOUTH);
@@ -142,32 +132,24 @@ public class PeerGUI{
 		Vector<Vector<Object>> data = dtm.getDataVector();
 		Iterator it = data.iterator();
 		while(it.hasNext()){
-			Vector<Object> row = (Vector<Object>) it.next();
-			//System.out.println(" col[0]: "+row.get(0)+" col[1]: "+row.get(1)+" col[2]: "+row.get(2));
+			Vector<Object> row = (Vector<Object>) it.next();			
 			peerTableRows(row);
 		}		
 	}
 
-	public void buildServerTable(DefaultTableModel dtm){
-		//createDialog();		
-		//table_s = new JTable(dtm);
-		//panel_down.add(new JScrollPane(table_s), BorderLayout.CENTER);
-		//DefaultTableModel dtm = peer.buildTable();		
+	public void buildServerTable(DefaultTableModel dtm){		
 		Vector<Vector<Object>> data = dtm.getDataVector();
 		Iterator it = data.iterator();
 		while(it.hasNext()){
-			Vector<Object> row = (Vector<Object>) it.next();
-			//System.out.println(" col[0]: "+row.get(0)+" col[1]: "+row.get(1)+" col[2]: "+row.get(2));
+			Vector<Object> row = (Vector<Object>) it.next();			
 			serverTableRows(row);
 		}
 	}
 	
 	// insert a new row or update an existing one
 	public void peerTableRows(Vector<Object> rowData){
-		String fileName = rowData.get(0).toString();
-		//String fileSize = "";
-		String value = rowData.get(2).toString();
-		System.out.println("PEER GUI: peerTableRows: file:"+fileName+", update value:"+value);
+		String fileName = rowData.get(0).toString();		
+		String value = rowData.get(2).toString();		
 		boolean find = false;
 		DefaultTableModel dtm = (DefaultTableModel) table_p.getModel();
 		int lenght = dtm.getRowCount();
@@ -193,10 +175,7 @@ public class PeerGUI{
 		PeerGUI gui = new PeerGUI();
 		Peer peer = new Peer(gui);
 		gui.setPeer(peer);
-		gui.builPeerTable();
-		//PeerGUI gui = new PeerGUI(peer);
-		//peer.setGUI(gui);
-		//gui.createDialog();
+		gui.builPeerTable();		
 	}
 
 }

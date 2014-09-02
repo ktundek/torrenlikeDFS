@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.net.*;
 import java.util.Enumeration;
 
+import Logger.Logging;
+
 
 public class PeerData implements Serializable{	
 	private static final long serialVersionUID = 5372923354124483879L;
@@ -23,8 +25,7 @@ public class PeerData implements Serializable{
 			try {
 				en = NetworkInterface.getNetworkInterfaces();
 			} catch (SocketException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Logging.write(this.getClass().getName(), "PeerData", "Error setting inet addres on linux. "+e.getMessage());
 			}while(en.hasMoreElements()){
 			    NetworkInterface ni=(NetworkInterface) en.nextElement();
 			    Enumeration ee = ni.getInetAddresses();
@@ -32,11 +33,11 @@ public class PeerData implements Serializable{
 			    	nr++;
 			        InetAddress ia= (InetAddress) ee.nextElement();
 			        if (nr==2){
-			        	System.out.println(ia.getHostAddress());		        	
+			        	//System.out.println(ia.getHostAddress());		        	
 			        	try {
 			    			this.inetAddress = InetAddress.getByName(ia.getHostAddress());
 			    		} catch (UnknownHostException e) {
-			    			// TODO Auto-generated catch block
+			    			Logging.write(this.getClass().getName(), "PeerData", "Error setting inet addres on linux. "+e.getMessage());
 			    		}
 			    			
 			        }

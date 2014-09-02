@@ -5,10 +5,10 @@ import java.util.concurrent.TimeUnit;
 
 import Client.PeerData;
 import Common.Constants;
+import Logger.Logging;
 
 public class ClientObserver extends Thread implements Constants{
 	private TrackerServerCore serverCore=null;
-	//private TrackerItem ti = null;
 	private long time = 0;
 	private PeerData peerData = null;
 	private int socketPort = 0;
@@ -35,20 +35,15 @@ public class ClientObserver extends Thread implements Constants{
 		while (isRunning){
 			try {				
 				this.sleep(5000);
-			} catch (InterruptedException e) {				
-				e.printStackTrace();
-				//this.interrupt();
-			}
-			//System.out.println("GET TIME:"+ time);
-			if (this.time + TRACKER_ALIVE_TIME <= System.currentTimeMillis()){			
-				System.out.println("Client is dead!");
+			} catch (InterruptedException e) {
+				Logging.write(this.getClass().getName(), "run", e.getMessage());				
+			}			
+			if (this.time + TRACKER_ALIVE_TIME <= System.currentTimeMillis()){
+				Logging.write(this.getClass().getName(), "run", "The client "+ peerData.getInetAddress() + " is dead!");				
 				this.interrupt();
 			}			
-			else System.out.println("OBS"+nr+": Client on port: "+socketPort+" is alive! Time is:" +time);//System.currentTimeMillis());
+			else System.out.println("ClientObserver: OBS"+nr+": Client on port: "+socketPort+" is alive! Time is:" +time);//System.currentTimeMillis());
+			//TODO
 		}
-	}
-
-	/*public void dieThread(){
-		this.dieThread();
-	}*/
+	}	
 }

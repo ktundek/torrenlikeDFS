@@ -5,6 +5,7 @@ import java.io.Serializable;
 import Common.Group;
 
 public class RegisterGroupReq implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private Group group;
 
 	public RegisterGroupReq(Group group) {

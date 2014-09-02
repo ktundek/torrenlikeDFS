@@ -2,9 +2,8 @@ package Messages;
 
 import java.io.Serializable;
 
-import Common.FileDataListClient;
-
 public abstract class ServerListResp implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private ServerRespMessages msg;
 	private Object obj;
 

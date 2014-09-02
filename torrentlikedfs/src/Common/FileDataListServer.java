@@ -7,13 +7,11 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-public class FileDataListServer implements Serializable {
-	//private HashSet<FileData> fileDataList;
+public class FileDataListServer implements Serializable {	
 	private Hashtable<String, FileData> fileDataList;
 
 	public FileDataListServer() {
-		super();
-		//fileDataList = (HashSet<FileData>) Collections.synchronizedSet(new HashSet<FileData>());	
+		super();		
 		fileDataList = new Hashtable<String, FileData>();
 	}
 	

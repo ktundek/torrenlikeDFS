@@ -13,6 +13,7 @@ import Client.PeerData;
 import Client.PeerItem;
 import Common.ChunkManager;
 import Common.FileData;
+import Logger.Logging;
 import Messages.ChunkListReq;
 import Messages.ChunkListResp;
 import Messages.ChunkMessage;
@@ -55,8 +56,7 @@ public class TrackerItem extends Thread{
 			this.in = new ObjectInputStream(socket.getInputStream());
 			this.out = new ObjectOutputStream(socket.getOutputStream());
 		} catch (IOException e) {
-			System.out.println("TrackerItem: Error creating ObjectInputStream/ObjectOutputStream!");
-			//e.printStackTrace();
+			Logging.write(this.getClass().getName(), "TrackerItem", "Error creating ObjectInputStream/ObjectOutputStream! "+e.getMessage());			
 		}		
 		this.serverCore = serverCore;
 		this.trackerserver = trackerserver;
@@ -71,36 +71,28 @@ public class TrackerItem extends Thread{
 			out.writeObject(obj);
 			out.flush();
 		} catch (IOException e) {
-			System.out.println("PEERHANDLER: error in sending message!");
-			e.printStackTrace();
-		}
-		//this.obj= obj; 
+			Logging.write(this.getClass().getName(),"senMessage" , "Error in sending message! "+e.getMessage());			
+		}		
 	}
 	
 	public void run(){
 		Object req = null;
-		Object resp = null;
-		//ObjectOutputStream out = null;
-		//ObjectInputStream in = null;
+		Object resp = null;		
 		
-		try {
-			//out = new ObjectOutputStream(socket.getOutputStream());
-			out.flush();
-			//in = new ObjectInputStream(socket.getInputStream());
-			System.out.println("TRACKER ITEM");
+		try {			
+			out.flush();						
 			
 			while(isRunning){
 				req = in.readObject();				
-				resp = getResponse(req);				
-				//out.writeObject(resp);
+				resp = getResponse(req);								
 				sendMessage(resp);
 			}
 			
-		} catch (IOException e) {			
-			e.printStackTrace();			
+		} catch (IOException e) {						
+			//Logging.write(this.getClass().getName(), "run", e.getMessage());
 			dieAllThreads();
 		} catch (ClassNotFoundException e) {			
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(), "run", e.getMessage());
 		}
 		finally
 		{
@@ -109,18 +101,13 @@ public class TrackerItem extends Thread{
 			    if(in != null){in.close();}			    
 			    if(socket != null){socket.close();}
 			} catch (IOException e) {				
-				e.printStackTrace();
+				Logging.write(this.getClass().getName(), "run", e.getMessage());
 			}
 		}
-	}
-	
-	public void processAlive(){
-		System.out.println("Peer is Alive: "+ System.currentTimeMillis());
-	}
+	}	
 	
 	public synchronized Object getResponse(Object request){
-		ChunkMessage chresponse = null;
-		//ServerResp response = (ServerResp) resp;
+		ChunkMessage chresponse = null;		
 		ServerResp response = null;
 		
 		if (request instanceof PeerAliveReq){  // PEER ALIVE
@@ -129,8 +116,7 @@ public class TrackerItem extends Thread{
 		}
 		else if((request instanceof RegisterPeerReq) && (request!=null)){  // REGISTER PEER
 			RegisterPeerReq rpr = (RegisterPeerReq)request;
-			peerData = rpr.getPeerData();
-			//PeerItem peerItem = new PeerItem(peerData, socket.getPort());
+			peerData = rpr.getPeerData();			
 			response = new RegisterPeerResp(serverCore.registerPeer(rpr, socket.getPort()));			
 			if ((response instanceof RegisterPeerResp) &&
 					(response.getMsg().getMsg()=="OK")){				
@@ -142,15 +128,9 @@ public class TrackerItem extends Thread{
 			chunkm.registerPeerFiles(rgr);
 			response = new RegisterGroupResp(serverCore.registerGroup(rgr));
 		}
-		else if(request instanceof ChunkReq){  // CHUNK REQUEST
-			System.out.println("TRACKERITEM: CHUNK REQUEST MESSAGE ");
-			ChunkReq req = (ChunkReq) request;
-			//chresponse = new ChunkResp(req.getPeerInfo());
-			chresponse =  chunkm.onChunkReq(req);
-			if (chresponse instanceof ChunkResp){
-				//ChunkResp ch = (ChunkResp) chresponse;
-				System.out.println("TRACKERITEM: RESP:");			
-			}
+		else if(request instanceof ChunkReq){  // CHUNK REQUEST			
+			ChunkReq req = (ChunkReq) request;			
+			chresponse =  chunkm.onChunkReq(req);			
 		}
 		else if(request instanceof ChunkListReq){ // CHUNK LIST REQUEST - get a list from the server
 			ChunkListReq chlreq = (ChunkListReq) request;
@@ -159,9 +139,7 @@ public class TrackerItem extends Thread{
 		}
 		else if(request instanceof ChunkResp){	// CHUNK RESP				
 			ChunkResp chresp = (ChunkResp) request;
-			chunkm.onChunkRespTracker(chresp);
-			//chunkm.writeChunk(resp.getFd(), resp.getChunkNr(), resp.getData());
-			//chunkm.mergeChunks(resp.getFd());
+			chunkm.onChunkRespTracker(chresp);			
 		}
 		else if (request instanceof RegisterChunkReq){ // REGISTER CHUNK
 			RegisterChunkReq req = (RegisterChunkReq) request;
@@ -179,7 +157,7 @@ public class TrackerItem extends Thread{
 			chresponse = resp;
 		}
 		else{
-			System.out.println("Unknown message type!");
+			//System.out.println("Unknown message type!");
 		}
 		
 		if (response==null) return chresponse; 
@@ -187,7 +165,6 @@ public class TrackerItem extends Thread{
 	}
 	
 	public void notifyPeer(ServerFilesUpdate sfu){
-		//chunkm.notifyPeer(fd);
 		sendMessage(sfu);
 	}
 	
@@ -195,18 +172,13 @@ public class TrackerItem extends Thread{
 		this.dieThread();
 	}
 	
-	public void dieAllThreads(){		
-		//System.out.println("DIE Nr of Peers: "+serverCore.getNrRegisteredPeer());
+	public void dieAllThreads(){				
 		PeerItem peerItem = new PeerItem(this.peerData, this.socket.getPort());
 		serverCore.unregisterPeer(peerItem);
-		chunkm.deletePeer(this.peerData);
-		//System.out.println("---------CHUNKOWNER AFTER DELETION---------");
-		//chunkm.writeOutChunkOwner();
-		System.out.println("TRCK "+nr+": The client has signed out");
-		observer.setIsRunning(false);
-		//observer.dieThread();
+		chunkm.deletePeer(this.peerData);			
+		Logging.write(this.getClass().getName(), "dieAllThreads", "TRCK "+nr+": The client "+ this.peerData.getInetAddress().toString() +" has signed out");
+		observer.setIsRunning(false);		
 		trackerserver.deleteTrackerItem(this);
-		isRunning = false;
-		//this.dieThread();
+		isRunning = false;	
 	}
 }

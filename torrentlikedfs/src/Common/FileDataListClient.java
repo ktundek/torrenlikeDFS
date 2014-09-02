@@ -14,8 +14,7 @@ public class FileDataListClient implements Serializable{
 
 	public FileDataListClient() {
 		super();
-		fileDataList = new Vector<FileData>();
-		//fileDataList =   Collections.synchronizedSet(new HashSet<FileData>());		
+		fileDataList = new Vector<FileData>();		
 	}
 
 	public Vector<FileData> getFileDataList() {
@@ -47,12 +46,7 @@ public class FileDataListClient implements Serializable{
 		return fileDataList.get(i);
 	}
 	
-	public void toStringFileDataList(){
-		/*Iterator itr = fileDataList.iterator();
-		while (itr.hasNext()){
-			FileData fd = (FileData)itr.next();
-			System.out.println(fd.getName()+", "+fd.getSize());			
-		}*/
+	public void toStringFileDataList(){		
 		for (int i=0; i<fileDataList.size(); i++){
 			System.out.println("FileDataListClient: "+fileDataList.get(i).getName()+", "+
 					fileDataList.get(i).getSize()+", crc:"+fileDataList.get(i).getCrc());

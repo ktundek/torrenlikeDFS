@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import Common.ChunkManager;
+import Logger.Logging;
 
 public class PeerServer extends Thread {
 	private int port;
@@ -23,24 +24,21 @@ public class PeerServer extends Thread {
 	
 	public void run(){
 		try {
-			pssocket = new ServerSocket(port);		
-			//System.out.println("PEERSERVER: Listening on port: "+port);
-		} catch (IOException e) {
-			System.out.println("PEERSERVER: Can not listen on port: "+port);
-			e.printStackTrace();
+			pssocket = new ServerSocket(port);					
+		} catch (IOException e) {			
+			Logging.write(this.getClass().getName(), "run", "Can not listen on port "+port +": "+e.getMessage());			
 		}
 		
 		Socket socket = null;
-		System.out.println("Waiting for other Peers...");
+		//System.out.println("Waiting for other Peers...");
 		while (true){
 			try {
 				socket = pssocket.accept();
-				nrOfPeers++;
-				System.out.println("Peer on port "+port+": My "+nrOfPeers+". client! ");
+				nrOfPeers++;				
+				Logging.write(this.getClass().getName(), "run", "Peer on port: "+port+ "It is the "+nrOfPeers+".th peer." );
 				PeerServerItem psi = new PeerServerItem(socket, chunkm);
-			} catch (IOException e) {
-				System.out.println("PEERSERVER: Connection is not accepted.");
-				e.printStackTrace();
+			} catch (IOException e) {				
+				Logging.write(this.getClass().getName(), "run", "Connection is not accepted. "+e.getMessage());				
 			}			
 		}
 	}

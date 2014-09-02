@@ -6,7 +6,8 @@ import java.io.Serializable;
 import Client.PeerData;
 import Common.FileData;
 
-public class ChunkListReq implements Serializable{
+public class ChunkListReq implements Serializable{	
+	private static final long serialVersionUID = 1L;
 	private FileData fileData;
 	private PeerData peer;
 	

@@ -7,6 +7,7 @@ import Client.PeerData;
 
 
 public class RegisterPeerChunk implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private PeerData peer;
 	private String chunkName;
 	private int chunkNr;

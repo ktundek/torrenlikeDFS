@@ -14,12 +14,12 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import Exceptions.UnableToReadFileException;
+import Logger.Logging;
 
 public class FileData implements Serializable,Constants{
 	private String name;
 	private long size; //in bytes
-	private String path;
-	//private byte[] hash;
+	private String path;	
 	private String crc;
 	
 	public FileData(){
@@ -35,15 +35,12 @@ public class FileData implements Serializable,Constants{
 			path = file.getCanonicalPath();
 			//hash = createChecksum(path);
 			crc = createChecksum(path);
-		} catch (UnableToReadFileException | IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Unable to read file: "+file.getName());
-			e.printStackTrace();
+		} catch (UnableToReadFileException | IOException e) {			
+			Logging.write(this.getClass().getName(), "FileData", "Unable to read file: "+file.getName() + ", "+e.getMessage());			
 		}
 	}
 	
 	// Calculate checksum for a file
-	//public byte[] createChecksum(String filePath){
 	public String createChecksum(String filePath) throws UnsupportedEncodingException{
 		FileInputStream fis = null;
 		byte[] mdBytes = null;		
@@ -52,10 +49,7 @@ public class FileData implements Serializable,Constants{
 			fis = new FileInputStream(filePath);
 			MessageDigest md = MessageDigest.getInstance("MD5");	    
 		    byte[] dataBytes = new byte[1024]; // buffer			    
-		    int read = 0; 
-		 
-		    //String toEnc = "abc";
-		    //md.update(toEnc.getBytes(), 0, toEnc.length());
+		    int read = 0; 		 	
 		    
 		    while ((read = fis.read(dataBytes)) != -1) {		    	
 		    	md.update(dataBytes, 0, read);
@@ -64,10 +58,9 @@ public class FileData implements Serializable,Constants{
 		    mdBytes = md.digest();	
 		    
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(),"createChecksum", e.getMessage());		
 		} catch (NoSuchAlgorithmException e) {
-			System.out.println("NO SUCH ALOGORITHM!");
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(),"createChecksum", "NO SUCH ALOGORITHM! "+e.getMessage());			
 		} catch (IOException e) {			
 			e.printStackTrace();
 		}
@@ -75,13 +68,7 @@ public class FileData implements Serializable,Constants{
 		String res="";
 		for (int i = 0; i < mdBytes.length; i++) {			
 			res+=Integer.toString((mdBytes[i] & 0xff) + 0x100, 16).substring(1);
-	    }			 
-		//System.out.println("Digest(in hex format):: "+res);						
-		
-		/*System.out.println("BigInteger:");		
-		BigInteger bi =new BigInteger(1, mdBytes);
-		String crc = bi.toString();
-		System.out.println("crc string:"+crc);*/
+	    }			 		
 			
 		return res;
 	}
@@ -107,15 +94,7 @@ public class FileData implements Serializable,Constants{
             append(name, fd.name).
             append(size, fd.size).
             append(crc, fd.crc).
-            isEquals();
-		/*boolean eq = false;
-		if ((obj !=null) && (obj instanceof FileData)){
-			FileData fd = (FileData) obj;
-			if ((this.name.equals(fd.name)) && (this.size==fd.size)){
-				eq = true;
-			}
-		}
-		return eq;*/				
+            isEquals();					
 	}
 	
 	public int getChunkNumber(){
@@ -157,13 +136,5 @@ public class FileData implements Serializable,Constants{
 	public void setCrc(String crc) {
 		this.crc = crc;
 	}	
-
-	/*public byte[] getHash() {
-		return hash;
-	}*/
-
-	/*public void setHash(byte[] hash) {
-		this.hash = hash;
-	}*/	
 		
 }

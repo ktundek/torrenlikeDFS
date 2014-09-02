@@ -8,12 +8,12 @@ import Client.PeerData;
 
 
 
-public class GetFilesResp extends ChunkMessage implements Serializable{
+public class GetFilesResp extends ChunkMessage implements Serializable{	
+	private static final long serialVersionUID = 1L;
 	private DefaultTableModel dtm = null;
 	
 	public GetFilesResp(PeerData peer) {
-		super(peer);
-		// TODO Auto-generated constructor stub
+		super(peer);		
 	}
 
 	public DefaultTableModel getDtm() {

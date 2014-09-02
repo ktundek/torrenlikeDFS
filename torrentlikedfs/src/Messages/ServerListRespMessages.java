@@ -3,7 +3,7 @@ package Messages;
 import java.io.Serializable;
 
 public class ServerListRespMessages extends ServerRespMessages implements Serializable {
-	//private ServerRespMessages msg = null;	
+	private static final long serialVersionUID = 1L;	
 	private String msg = null;
 	private Object obj = null;
 	

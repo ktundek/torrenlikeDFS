@@ -12,22 +12,16 @@ import Common.ChunkState;
 import Common.Constants;
 import Common.FileData;
 import Common.FileDataListClient;
+import Logger.Logging;
 import Messages.RegisterChunkReq;
 import Messages.ServerFilesUpdate;
 
-public class TrackerServer implements Constants{
-	//private ServerSocket serverSocket;
-	//private TrackerServerCore tcs;
+public class TrackerServer implements Constants{	
 	private Vector<TrackerItem> trackers = null;
 
 	public TrackerServer() {
 		trackers = new Vector<TrackerItem>();
-	}
-	
-	private void registerTrackerFiles(String directory){
-		FileDataListClient fdl = new FileDataListClient();
-		fdl = getFileList(directory);
-	}
+	}	
 	
 	public FileDataListClient getFileList(String directory){
 		FileDataListClient fdl = new FileDataListClient();
@@ -69,8 +63,7 @@ public class TrackerServer implements Constants{
 					fd.setName(fName);
 					fd.setSize(Long.valueOf(fSize));
 					fd.setCrc(fCrc);
-					files.put(fCrc, fd);
-					//System.out.println("DESC PARAMETERS:"+fName+", "+fSize+", "+fCrc+", "+fChunkNr);
+					files.put(fCrc, fd);					
 					
 					if (!chunks.containsKey(fCrc)){						
 						ChunkInfo ci = new ChunkInfo(fChunkNr);
@@ -79,9 +72,7 @@ public class TrackerServer implements Constants{
 								String chname = fName+fSize+fCrc.substring(0, 5)+"_"+k+".chnk";
 								if (chunkList[j].getName().equals(chname)){									
 									ci.setState(k, ChunkState.COMPLETED); 									
-									/*for (int h=0; h<ci.nrChunks(); h++){
-										System.out.println(ci.getState(h));
-									}*/
+									
 									chunks.put(fCrc, ci);
 								}
 							}
@@ -101,10 +92,7 @@ public class TrackerServer implements Constants{
 			
 		}
 		if (chunks!=null){
-			rcr = new RegisterChunkReq(chunks, null, files);
-			//System.out.println("RegisterChunkReq PeedData: "+ peerData.getInetAddress()+" : "+peerData.getPort());
-			//RegisterChunkResp resp = chunkm.processRegisterChunkRequest(rcr);
-			//handler.sendMessage(rcr);
+			rcr = new RegisterChunkReq(chunks, null, files);			
 		}
 		return rcr;
 		
@@ -123,8 +111,7 @@ public class TrackerServer implements Constants{
 			    String line = null;
 			    int ind = 0;
 			    while ((line = reader.readLine()) != null) {
-			        res[ind] = line;
-			        //System.out.println("DESC data: "+ind+" "+res[ind]);
+			        res[ind] = line;			        
 			        ind++;
 			    }			    
 			} catch (IOException e) {
@@ -135,8 +122,8 @@ public class TrackerServer implements Constants{
 	}
 	
 	public synchronized void notifyTrackerItems(ServerFilesUpdate sfu){
-		for (int i=0; i<trackers.size(); i++){
-			System.out.println("TRACKERSERVER: Notify all peers about the new file");
+		for (int i=0; i<trackers.size(); i++){			
+			Logging.write(this.getClass().getName(), "notifyTrackerItems" , "Notify all peers about the new file.");
 			TrackerItem ti = trackers.get(i);
 			ti.notifyPeer(sfu);
 		}
@@ -149,9 +136,7 @@ public class TrackerServer implements Constants{
 	public static void main(String args[]){
 		FileDataListClient fdl = null;
 		String dirr = "C:/TreckerServer/";		
-		String dirw = "C:/TreckerServerChunk/";
-		//String dirr = "C:/PeerClient/";
-		//String dirw = "C:/PeerClientChunk/";
+		String dirw = "C:/TreckerServerChunk/";		
 
 		TrackerServer ts = new TrackerServer();
 		ServerSocket serverSocket = null;
@@ -165,34 +150,32 @@ public class TrackerServer implements Constants{
 		chunkm.registerTrackerFiles(fdl);
 		if (ts.getChunkList(dirw)!=null)
 			chunkm.registerTrackerChunk(ts.getChunkList(dirw));
-		chunkm.writeoutfileChunks();
-		//chunkm.writeOutChunkOwner();
-		
-		//int port = 9000;
+		//chunkm.writeoutfileChunks();		
+				
 		Socket socket = null;			
 		int serverItemNr = 0;
 		
 		try {
 			serverSocket = new ServerSocket(TRACKER_PORT);
-		} catch (IOException e) {			
-			System.out.println("Could not listen on the port " + TRACKER_PORT);
+		} catch (IOException e) {						
+			Logging.write("TrackerServer", "main", "Could not listen on the port " + TRACKER_PORT+ "   "+e.getMessage());
 			System.exit(-1);
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
-		
+				
+		Logging.write("TrackerServer", "main", "Tracker is waiting for clients...");
 		System.out.println("Tracker is waiting for clients...");
 		while (true){									
 			try {
 				socket = serverSocket.accept();				
-				serverItemNr++;
-				System.out.println("New client registered on port:"+ socket.getPort());
+				serverItemNr++;				
+				Logging.write("TrackerServer", "main", "New client registered on port:"+ socket.getPort());
 				ClientObserver observer = new ClientObserver(tsc, System.currentTimeMillis(), socket.getPort(), serverItemNr);
 				TrackerItem ti = new TrackerItem(socket, tsc, ts, observer, chunkm, serverItemNr);
 				ts.trackers.add(ti);
 			} 
-			catch (IOException e) {
-				System.out.println("Connection is not accepted");
-				e.printStackTrace();
+			catch (IOException e) {				
+				Logging.write("TrackerServer", "main", "Connection is not accepted    "+e.getMessage());				
 				break;
 			}
 		}

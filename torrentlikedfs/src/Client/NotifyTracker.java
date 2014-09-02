@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import Exceptions.UnexpectedMessageException;
+import Logger.Logging;
 import Messages.PeerAliveReq;
 import Messages.ServerResp;
 import Messages.TrackerAliveResp;
@@ -33,22 +34,16 @@ public class NotifyTracker extends Thread {
 		PeerAliveReq alive = new PeerAliveReq();		
 		while (isRunning){
 			try {
-				
-				//if (serverResp){
+								
 				out.writeObject(alive);
 				out.flush();				
-				TimeUnit.SECONDS.sleep(10);
-				//serverResp=false;
-				//}
-				//else
-				//	System.out.println("Server is down. Try to reconnect!");
+				TimeUnit.SECONDS.sleep(10);				
 				
-			} catch (IOException e) {
-				System.out.println("SOCKET EXCEPTION in NOTIFY TRACKER!");
-				isRunning = false;
-				e.printStackTrace();			
+			} catch (IOException e) {				
+				Logging.write(this.getClass().getName(), "run", "SOCKET EXCEPTION "+ e.getMessage() );
+				isRunning = false;							
 			} catch (InterruptedException e) {				
-				e.printStackTrace();			
+				Logging.write(this.getClass().getName(), "run", e.getMessage() );			
 			}							
 		}
 	}

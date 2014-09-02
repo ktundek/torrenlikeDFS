@@ -6,26 +6,22 @@ import java.util.Vector;
 
 import Client.PeerData;
 import Client.PeerItem;
+import Logger.Logging;
 
 
 
-public class PeerItemList{
-	//private Vector<PeerItem> peerItemList;
+public class PeerItemList{	
 	private ArrayList<PeerItem> peerItemList;
 
 	public PeerItemList() {
-		super();	
-		//peerItemList = new Vector<PeerItem>();
+		super();			
 		peerItemList = new ArrayList<PeerItem>();
-	}
+	}	
 	
-
-	//public Vector<PeerItem> getPeerDataList() {
 	public ArrayList<PeerItem> getPeerDataList() {
 		return peerItemList;
 	}
 
-	//public void setPeerDataList(Vector<PeerItem> peerItemList) {
 	public void setPeerDataList(ArrayList<PeerItem> peerItemList) {
 		this.peerItemList = peerItemList;
 	}
@@ -93,9 +89,10 @@ public class PeerItemList{
 	
 	public void toStringList(){
 		for (int i=0; i<peerItemList.size(); i++){
-			System.out.println(i+". Peer innetAddress: "+peerItemList.get(i).getPeerData().getInetAddress()
+			Logging.write(this.getClass().getName(), "tiStringList", "Peers list: "
+					+i+". Peer innetAddress: "+peerItemList.get(i).getPeerData().getInetAddress()
 					+", local port: "+ peerItemList.get(i).getPeerData().getPort()
-					+" and port: "+peerItemList.get(i).getPort());
+					+" and port: "+peerItemList.get(i).getPort());			
 		}
 	}
 }

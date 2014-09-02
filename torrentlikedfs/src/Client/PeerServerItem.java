@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import Common.ChunkManager;
+import Logger.Logging;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
 import Messages.ServerRespMessages;
@@ -39,10 +40,8 @@ public class PeerServerItem extends Thread{
 				out.writeObject(resp);				
 			}
 			
-		} catch (IOException e) {
-			System.out.println("PEERSERVERITEM: The peer has logd out.");
-			//e.printStackTrace();			
-			//dieThreads();
+		} catch (IOException e) {			
+			Logging.write(this.getClass().getName(), "run", "The peer logged out. "+e.getMessage());			
 		} catch (ClassNotFoundException e) {			
 			e.printStackTrace();
 		}
@@ -61,13 +60,9 @@ public class PeerServerItem extends Thread{
 	public synchronized Object getResponse(Object req){
 		Object resp = null;
 		
-		if (req instanceof ChunkReq){
-			//resp = new ChunkResp();
-			System.out.println("PEERSERVERITEM: ChunkReq");			
+		if (req instanceof ChunkReq){						
 			ChunkReq chunkReq = (ChunkReq) req;
-			resp = chunkm.onChunkReq(chunkReq);
-			//ChunkResp chunkResp = (ChunkResp)resp;
-			//chunkm.onChunkRespPeer(chunkResp);
+			resp = chunkm.onChunkReq(chunkReq);			
 		}
 		
 		return resp;

@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import Common.ChunkManager;
 import Common.FileDataListClient;
+import Logger.Logging;
 import Messages.ChunkListResp;
 import Messages.ChunkReq;
 import Messages.ChunkResp;
@@ -29,8 +30,7 @@ public class PeerHandler extends Thread{
 	private Peer peer;
 	private NotifyTracker nt;
 	private ChunkManager chunkm;
-	private boolean isRunning = true;
-	//private Object obj = null;	
+	private boolean isRunning = true;	
 	private Object resp = null;
 	private ObjectOutputStream out = null;
 	private ObjectInputStream in = null;
@@ -53,10 +53,8 @@ public class PeerHandler extends Thread{
 			out.writeObject(obj);
 			out.flush();
 		} catch (IOException e) {
-			System.out.println("PEERHANDLER: error in sending message!");
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(), "sendMessage", "Error in sending message! "+e.getMessage());			
 		}
-		//this.obj= obj; 
 	}
 	
 	public void run(){		
@@ -68,11 +66,10 @@ public class PeerHandler extends Thread{
 				processResponse(resp);					
 			}
 			
-		} catch (IOException e) {			
-			e.printStackTrace();			
-			//dieThreads();
+		} catch (IOException e) {
+			Logging.write(this.getClass().getName(),"run", e.getMessage());			
 		} catch (ClassNotFoundException e) {			
-			e.printStackTrace();
+			Logging.write(this.getClass().getName(),"run", e.getMessage());
 		}
 		finally
 		{
@@ -81,7 +78,7 @@ public class PeerHandler extends Thread{
 			    if(in != null){in.close();}			    
 			    if(socket != null){socket.close();}
 			} catch (IOException e) {				
-				e.printStackTrace();
+				Logging.write(this.getClass().getName(),"run", e.getMessage());
 			}
 		}
 	}
@@ -91,30 +88,26 @@ public class PeerHandler extends Thread{
 		if (response!=null){  
 			if(response instanceof TrackerAliveResp){
 				//nt.setServerResp(true);
-				System.out.println("PEERHANDLER: TrackerAliveResp");
+				//System.out.println("PEERHANDLER: TrackerAliveResp");
 			}
-			else if(response instanceof RegisterGroupResp){
-				System.out.println("PEERHANDLER: RegisterGroupResp");
+			else if(response instanceof RegisterGroupResp){				
 				RegisterGroupResp rgr = (RegisterGroupResp)response; 
 				ServerListRespMessages msg = (ServerListRespMessages)rgr.getServerRespMessages();
 				FileDataListClient fileList = (FileDataListClient)msg.getObj();
 				for (int i=0; i<fileList.getSize(); i++){
 					System.out.println("PEERHANDLER RegisterGroupResp: File list: "+fileList.getItem(i).getName());
-				}
-				//sendMessage(chunkm.getChunkReq());
+				}				
 				chunkm.processFileListChunkReq(fileList);
 			}
 			else if (response instanceof ChunkReq){
 				ChunkReq req = (ChunkReq) response;
 				chunkm.onChunkReq(req);
 			}
-			else if (response instanceof ChunkResp){
-				System.out.println("PEERHANDLER: CHNUKRESP MESSAGE!");
+			else if (response instanceof ChunkResp){				
 				ChunkResp resp = (ChunkResp) response; 
 				chunkm.onChunkRespPeer(resp);
 			}
-			else if(response instanceof RegisterChunkResp){  // REGISTER CHUNK RESPONSE
-				System.out.println("PEERHANDLER: REGISTER CHUNK REQUEST");
+			else if(response instanceof RegisterChunkResp){  // REGISTER CHUNK RESPONSE				
 				RegisterChunkResp rcr = (RegisterChunkResp) response;
 				chunkm.processChunkListReq(rcr);
 			}
@@ -122,8 +115,7 @@ public class PeerHandler extends Thread{
 				ChunkListResp chunkList = (ChunkListResp)response;
 				peer.downloadAFile(chunkList);
 			}
-			else if(response instanceof GetFilesResp){
-				System.out.println("PEERHANDLER: GetFilesResp");
+			else if(response instanceof GetFilesResp){				
 				peer.buildServerTable((GetFilesResp)response);
 			}
 			else if (response instanceof ServerFilesUpdate){				
@@ -132,8 +124,8 @@ public class PeerHandler extends Thread{
 			else
 				System.out.println("PEERHANDLER: Other type of message");
 		}
-		else 
-			System.out.println("PEERHANDLER: the response is empty");
+		//else 
+			//System.out.println("PEERHANDLER: the response is empty");
 	}
 	
 	// update peer's file table
